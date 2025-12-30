@@ -386,7 +386,7 @@ a {
 
 /* Contact */
 .contact-section {
-    text-align: center;
+    text-align: left; /* Fixed: Left alignment as requested */
 }
 
 .contact-section p {
@@ -698,4 +698,25 @@ body::before {
     .contact-section p {
         font-size: 1.1rem;
     }
+
+    /* Fix Font Hierarchy on Mobile */
+    .about-text h3 {
+        font-size: 1.3rem;
+        margin-bottom: 15px;
+    }
+
+    .about-text p {
+        font-size: 0.9rem;
+        line-height: 1.6;
+    }
+
+    .skills-list li {
+        font-size: 0.75rem;
+        padding: 5px 10px;
+    }
+}
+
+/* Contact Section Alignment Fix */
+.contact-section {
+    text-align: left !important; /* Force left alignment */
 }

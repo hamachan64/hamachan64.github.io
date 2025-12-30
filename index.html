@@ -33,7 +33,11 @@
     <main>
         <section id="hero" class="hero-section">
             <div class="hero-bg">
-                <img src="assets/images/profile.jpg" alt="Profile Background" class="hero-img">
+                <picture class="hero-img-container">
+                    <source media="(max-width: 768px)" srcset="assets/images/profile-vertical.jpg">
+                    <source media="(orientation: portrait) and (max-width: 1024px)" srcset="assets/images/profile-vertical.jpg">
+                    <img src="assets/images/profile.jpg" alt="Profile Background" class="hero-img">
+                </picture>
                 <div class="overlay"></div>
             </div>
             <div class="hero-content">
