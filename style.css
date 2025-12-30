@@ -386,7 +386,7 @@ a {
 
 /* Contact */
 .contact-section {
-    text-align: left; /* Fixed: Left alignment as requested */
+    text-align: left;
 }
 
 .contact-section p {
@@ -718,5 +718,6 @@ body::before {
 
 /* Contact Section Alignment Fix */
 .contact-section {
-    text-align: left !important; /* Force left alignment */
+    text-align: left !important;
+    /* Force left alignment */
 }
