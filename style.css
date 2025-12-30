@@ -581,3 +581,45 @@ body::before {
         clip: rect(20px, 9999px, 90px, 0);
     }
 }
+
+/* Mobile Responsiveness */
+@media screen and (max-width: 768px) {
+    .header {
+        padding: 15px 20px;
+    }
+
+    .logo {
+        font-size: 1.1rem;
+        white-space: nowrap;
+    }
+
+    .nav ul {
+        gap: 15px;
+    }
+
+    .nav a {
+        font-size: 0.8rem;
+    }
+
+    .hero-content {
+        top: 70%;
+        /* Move up slightly to avoid scroll indicator */
+        padding: 0 10px;
+    }
+
+    .hero-content h1 {
+        font-size: clamp(1.5rem, 8vw, 2.5rem);
+        /* Smaller for mobile */
+        white-space: nowrap;
+        /* Prevent wrapping to keep glitch effect intact */
+    }
+
+    .hero-content .subtitle-ja {
+        font-size: 1rem;
+    }
+
+    .scroll-indicator {
+        bottom: 10px;
+        /* More space at bottom */
+    }
+}
