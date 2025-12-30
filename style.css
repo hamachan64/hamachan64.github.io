@@ -582,66 +582,111 @@ body::before {
     }
 }
 
-/* Mobile Responsiveness */
+/* =========================================
+   RESPONSIVE DESIGN SYSTEM
+   ========================================= */
+
+/* --- Tablet / Laptop (max-width: 1024px) --- */
+@media screen and (max-width: 1024px) {
+    .section-title {
+        font-size: 2.5rem;
+    }
+
+    .hero-content h1 {
+        font-size: clamp(2.5rem, 7vw, 5rem);
+    }
+}
+
+/* --- Mobile (max-width: 768px) --- */
 @media screen and (max-width: 768px) {
+
+    /* 1. Header Fixes */
     .header {
-        padding: 15px 20px;
-        background: rgba(5, 5, 5, 0.9);
-        /* More opaque on mobile */
+        padding: 15px 15px;
+        background: rgba(5, 5, 5, 0.95);
+        /* High opacity for readability */
+        flex-direction: column;
+        /* Stack logo and nav if really tight, or keep row with small fonts */
+        align-items: center;
+        gap: 10px;
     }
 
     .logo {
         font-size: 1.2rem;
+        /* Reduced from 1.5rem */
         white-space: nowrap;
+        width: 100%;
+        text-align: center;
+    }
+
+    .nav {
+        width: 100%;
     }
 
     .nav ul {
         gap: 15px;
+        justify-content: center;
+        /* Center nav items */
+        padding: 0;
     }
 
     .nav a {
         font-size: 0.75rem;
-        /* Compact nav */
         letter-spacing: 1px;
     }
 
+    /* 2. Hero Image Fix (Remove top blank space) */
+    .hero-bg {
+        align-items: flex-start;
+        /* Move image to top */
+        padding-top: 80px;
+        /* Offset for header */
+    }
+
+    .hero-img {
+        object-fit: contain;
+        object-position: top center;
+        /* Ensure it stays at top */
+        height: 60vh;
+        /* Allow space for text below */
+    }
+
+    /* 3. Hero Title Fix (Prevent cutoff) */
     .hero-content {
-        top: 65%;
-        /* Move up to clear bottom area */
-        padding: 0 15px;
+        top: 60%;
+        /* Adjusted position */
+        padding: 0 10px;
         width: 100%;
     }
 
     .hero-content h1 {
-        font-size: clamp(1.8rem, 8vw, 2.5rem);
+        font-size: clamp(1.2rem, 8vw, 2.2rem);
+        /* Significantly smaller to fit screen */
         white-space: nowrap;
         margin-bottom: 5px;
     }
 
     .hero-content .subtitle-ja {
         font-size: 0.9rem;
-        margin-bottom: 15px;
-    }
-
-    .hero-content .vision {
-        font-size: 0.8rem;
+        margin-bottom: 10px;
     }
 
     .scroll-indicator {
         bottom: 15px;
     }
 
-    /* Compact Sections for Mobile */
+    /* 4. Section Title & Layout Fixes */
     .section {
         padding: 60px 20px;
-        min-height: auto;
-        /* Allow content to dictate height */
     }
 
     .section-title {
-        font-size: 2rem;
+        font-size: 1.8rem;
         margin-bottom: 30px;
-        padding-left: 15px;
+        padding-left: 10px;
+        /* Reduced padding */
+        border-left-width: 2px;
+        /* Thinner accent line */
     }
 
     /* Single Column for Works */
@@ -650,17 +695,7 @@ body::before {
         gap: 20px;
     }
 
-    .about-text h3 {
-        font-size: 1.5rem;
-    }
-
-    .about-text p {
-        font-size: 0.95rem;
-        line-height: 1.8;
-    }
-
-    .skills-list li {
-        font-size: 0.8rem;
-        padding: 8px 15px;
+    .contact-section p {
+        font-size: 1.1rem;
     }
 }
