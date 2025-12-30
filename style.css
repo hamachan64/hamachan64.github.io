@@ -660,10 +660,14 @@ body::before {
     }
 
     .hero-content h1 {
-        font-size: clamp(1.2rem, 8vw, 2.2rem);
-        /* Significantly smaller to fit screen */
+        font-size: clamp(1rem, 6vw, 2rem);
+        /* Adjusted to fit "Yuki Hamaguchi" without clipping */
         white-space: nowrap;
         margin-bottom: 5px;
+        width: 100%;
+        /* Ensure centering works */
+        overflow: visible;
+        /* Prevent accidental clipping */
     }
 
     .hero-content .subtitle-ja {
