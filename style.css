@@ -586,10 +586,12 @@ body::before {
 @media screen and (max-width: 768px) {
     .header {
         padding: 15px 20px;
+        background: rgba(5, 5, 5, 0.9);
+        /* More opaque on mobile */
     }
 
     .logo {
-        font-size: 1.1rem;
+        font-size: 1.2rem;
         white-space: nowrap;
     }
 
@@ -598,28 +600,67 @@ body::before {
     }
 
     .nav a {
-        font-size: 0.8rem;
+        font-size: 0.75rem;
+        /* Compact nav */
+        letter-spacing: 1px;
     }
 
     .hero-content {
-        top: 70%;
-        /* Move up slightly to avoid scroll indicator */
-        padding: 0 10px;
+        top: 65%;
+        /* Move up to clear bottom area */
+        padding: 0 15px;
+        width: 100%;
     }
 
     .hero-content h1 {
-        font-size: clamp(1.5rem, 8vw, 2.5rem);
-        /* Smaller for mobile */
+        font-size: clamp(1.8rem, 8vw, 2.5rem);
         white-space: nowrap;
-        /* Prevent wrapping to keep glitch effect intact */
+        margin-bottom: 5px;
     }
 
     .hero-content .subtitle-ja {
-        font-size: 1rem;
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+    }
+
+    .hero-content .vision {
+        font-size: 0.8rem;
     }
 
     .scroll-indicator {
-        bottom: 10px;
-        /* More space at bottom */
+        bottom: 15px;
+    }
+
+    /* Compact Sections for Mobile */
+    .section {
+        padding: 60px 20px;
+        min-height: auto;
+        /* Allow content to dictate height */
+    }
+
+    .section-title {
+        font-size: 2rem;
+        margin-bottom: 30px;
+        padding-left: 15px;
+    }
+
+    /* Single Column for Works */
+    .works-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .about-text h3 {
+        font-size: 1.5rem;
+    }
+
+    .about-text p {
+        font-size: 0.95rem;
+        line-height: 1.8;
+    }
+
+    .skills-list li {
+        font-size: 0.8rem;
+        padding: 8px 15px;
     }
 }
