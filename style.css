@@ -151,12 +151,13 @@ a {
     width: 100%;
     /* Fill container */
     height: 100%;
-    object-fit: contain;
-    /* Ensure full image is visible */
-    object-position: center center;
-    /* Added mask to fade edges for seamless blend */
-    mask-image: linear-gradient(to right, transparent 0%, black 20%, black 80%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 20%, black 80%, transparent 100%);
+    object-fit: cover;
+    /* Changed from contain to cover to strictly fill the 80%/95% width */
+    object-position: center top;
+    /* Focus on faces/top part */
+    /* Mask to fade edges */
+    mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%);
     filter: contrast(1.1);
     opacity: 1;
     position: relative;
@@ -657,8 +658,9 @@ body::before {
     }
 
     .hero-img {
-        object-fit: contain;
-        object-position: top center;
+        object-fit: cover;
+        /* Ensure filling width on mobile too */
+        object-position: center top;
         /* Ensure it stays at top */
         height: 60vh;
         /* Allow space for text below */
