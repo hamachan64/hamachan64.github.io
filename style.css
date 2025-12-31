@@ -349,6 +349,9 @@ a {
     overflow: hidden;
     transition: 0.3s;
     cursor: pointer;
+    display: block;
+    /* For anchor tags */
+    height: 100%;
 }
 
 .work-card:hover {
@@ -364,8 +367,8 @@ a {
     overflow: hidden;
 }
 
-/* Placeholder pattern for thumb */
-.work-thumb::before {
+/* Placeholder pattern for thumb - Only for non-active (placeholders) */
+.work-card:not(.active-work) .work-thumb::before {
     content: '';
     position: absolute;
     top: 0;
@@ -389,11 +392,20 @@ a {
     font-family: var(--font-heading);
     font-size: 1.2rem;
     margin-bottom: 5px;
+    color: var(--text-color);
 }
 
-.work-info p {
+.work-meta {
+    margin-bottom: 10px;
+    color: var(--accent-color);
     font-size: 0.9rem;
-    color: #888;
+    font-weight: bold;
+}
+
+.work-concept {
+    font-size: 0.85rem;
+    color: #aaa;
+    line-height: 1.5;
 }
 
 /* Contact */
