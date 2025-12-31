@@ -13,14 +13,14 @@
         rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Detail Page Specific Styles - to be moved to css later if needed */
+        /* Detail Page Specific Styles */
         .detail-hero {
             height: 60vh;
             position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
-            background-image: url('assets/images/project02.jpg');
+            background-image: url('assets/images/works/02/project02.jpg');
             background-size: cover;
             background-position: center;
             margin-top: 80px;
@@ -75,13 +75,18 @@
 
         .project-media {
             margin: 40px 0;
+        }
+
+        .media-item {
+            margin-bottom: 30px;
             border-radius: 10px;
             overflow: hidden;
             border: 1px solid rgba(255, 255, 255, 0.1);
+            background: #000;
         }
 
-        .project-media img,
-        .project-media video {
+        .media-item img,
+        .media-item video {
             width: 100%;
             display: block;
         }
@@ -157,10 +162,19 @@
             </div>
 
             <div class="project-media">
-                <!-- Video Placeholder -->
-                <div style="padding: 100px; text-align: center; background: rgba(255,255,255,0.05);">
-                    <p>Demo Video / Image Gallery Area</p>
-                    <p style="font-size: 0.8rem; color: #888;">(動画や追加画像をここに配置)</p>
+                <!-- Video -->
+                <div class="media-item">
+                    <h3 style="font-family: var(--font-heading); margin-bottom: 15px; text-align: center;">Demo Video
+                    </h3>
+                    <video controls controlsList="nodownload">
+                        <source src="assets/images/works/02/02-01.MP4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+
+                <!-- Image -->
+                <div class="media-item">
+                    <img src="assets/images/works/02/02-02.jpg" alt="Project Image">
                 </div>
             </div>
 

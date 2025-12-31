@@ -20,7 +20,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background-image: url('assets/images/project01.png');
+            background-image: url('assets/images/works/01/project01.png');
             background-size: cover;
             background-position: center;
             margin-top: 80px;
@@ -75,15 +75,43 @@
 
         .project-media {
             margin: 40px 0;
+        }
+
+        .media-item {
+            margin-bottom: 30px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: #000;
+        }
+
+        .media-item img,
+        .media-item video {
+            width: 100%;
+            display: block;
+        }
+
+        /* YouTube Shorts Container */
+        .youtube-shorts-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            /* Limit width for vertical video */
+            margin: 0 auto;
+            aspect-ratio: 9/16;
+            background: #000;
             border-radius: 10px;
             overflow: hidden;
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        .project-media img,
-        .project-media video {
+        .youtube-shorts-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
-            display: block;
+            height: 100%;
+            border: 0;
         }
 
         .back-link {
@@ -157,10 +185,28 @@
             </div>
 
             <div class="project-media">
-                <!-- Video Placeholder -->
-                <div style="padding: 100px; text-align: center; background: rgba(255,255,255,0.05);">
-                    <p>Demo Video / Image Gallery Area</p>
-                    <p style="font-size: 0.8rem; color: #888;">(動画や追加画像をここに配置)</p>
+                <!-- YouTube Short -->
+                <div style="margin-bottom: 40px; text-align: center;">
+                    <h3 style="font-family: var(--font-heading); margin-bottom: 15px;">Demo Video</h3>
+                    <div class="youtube-shorts-container">
+                        <iframe src="https://www.youtube.com/embed/RK9K6ejfhXM" title="YouTube video player"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowfullscreen></iframe>
+                    </div>
+                </div>
+
+                <!-- Images -->
+                <div class="media-item">
+                    <img src="assets/images/works/01/01-01.png" alt="AR Card Demo 1">
+                </div>
+                <div class="media-item">
+                    <img src="assets/images/works/01/01-02.png" alt="AR Card Demo 2">
+                </div>
+                <div class="media-item">
+                    <img src="assets/images/works/01/01-03.jpg" alt="AR Card Demo 3">
+                </div>
+                <div class="media-item">
+                    <img src="assets/images/works/01/01-04.jpg" alt="AR Card Demo 4">
                 </div>
             </div>
 
