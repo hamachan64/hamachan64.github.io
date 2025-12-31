@@ -1,28 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Custom Cursor
-    const cursorDot = document.querySelector('.cursor-dot');
-    const cursorOutline = document.querySelector('.cursor-outline');
+    // Custom Cursor Logic Removed
 
-    window.addEventListener('mousemove', (e) => {
-        const posX = e.clientX;
-        const posY = e.clientY;
-
-        // Dot follows cursor immediately
-        cursorDot.style.left = `${posX}px`;
-        cursorDot.style.top = `${posY}px`;
-
-        // Outline follows with a slight delay
-        cursorOutline.animate({
-            left: `${posX}px`,
-            top: `${posY}px`
-        }, { duration: 500, fill: "forwards" });
-    });
 
     // Hover effect for links
     document.querySelectorAll('a, button, .work-card').forEach(el => {
         el.addEventListener('mouseenter', () => {
-            cursorOutline.style.width = '60px';
-            cursorOutline.style.height = '60px';
             cursorOutline.style.backgroundColor = 'rgba(0, 243, 255, 0.1)';
         });
         el.addEventListener('mouseleave', () => {

@@ -32,29 +32,39 @@ a {
     transition: 0.3s;
 }
 
-/* Custom Cursor */
-.cursor-dot,
-.cursor-outline {
-    position: fixed;
-    top: 0;
-    left: 0;
-    transform: translate(-50%, -50%);
-    border-radius: 50%;
-    z-index: 9999;
-    pointer-events: none;
+/* Custom Cursor Removed */
+
+/* Hero Image Width Adjustment */
+.hero-img-container {
+    width: 80%;
+    /* PC Default */
+    height: 100%;
+    margin: 0 auto;
+    /* Center */
+    display: block;
+    position: relative;
+    z-index: 2;
 }
 
-.cursor-dot {
-    width: 8px;
-    height: 8px;
-    background-color: var(--accent-color);
+/* ... existing styles ... */
+
+/* Mobile Responsiveness */
+@media screen and (max-width: 768px) {
+    /* ... existing mobile styles ... */
+
+    .hero-img-container {
+        width: 90%;
+        /* Mobile Width */
+    }
 }
 
-.cursor-outline {
-    width: 40px;
-    height: 40px;
-    border: 1px solid var(--accent-color);
-    transition: width 0.2s, height 0.2s, background-color 0.2s;
+/* Contact Revert to Left */
+.contact-section {
+    text-align: left;
+}
+
+.social-links {
+    justify-content: flex-start;
 }
 
 /* Header */
@@ -139,6 +149,7 @@ a {
 
 .hero-img {
     width: 100%;
+    /* Fill container */
     height: 100%;
     object-fit: contain;
     /* Ensure full image is visible */
@@ -387,7 +398,7 @@ a {
 /* Contact */
 /* Contact */
 .contact-section {
-    text-align: center;
+    text-align: left;
 }
 
 .contact-section p {
@@ -434,7 +445,7 @@ a {
 .social-links {
     margin-top: 50px;
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     /* Aligned to left to match text */
     gap: 30px;
 }
