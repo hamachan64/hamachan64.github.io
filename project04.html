@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IMMERSNAP | Hamachan</title>
+    <meta name="description" content="IMMERSNAP - XR Moment Capture & Sharing">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Zen+Kaku+Gothic+New:wght@300;400;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* 詳細ページ固有のスタイル */
+        .detail-hero {
+            height: 60vh;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* 仮画像パスを指定しつつ、画像が無い場合のフォールバックとしてグラデーションを設定 */
+            background-image: url('assets/images/works/04/project04.png'), linear-gradient(135deg, #1f1c2c, #928dab);
+            background-size: cover;
+            background-position: center;
+            margin-top: 80px;
+            /* ヘッダー分の余白 */
+        }
+
+        .detail-hero::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent 0%, var(--bg-color) 100%);
+        }
+
+        .detail-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 50px 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .project-meta {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 20px;
+        }
+
+        .meta-item strong {
+            display: block;
+            color: var(--accent-color);
+            font-family: var(--font-heading);
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .meta-item span {
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+
+        .project-overview p {
+            line-height: 2;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+
+        .project-media {
+            margin: 40px 0;
+        }
+
+        .media-item {
+            margin-bottom: 30px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: #222; /* 画像がない場合の背景色 */
+            aspect-ratio: 16/9; /* 画像がない場合のプレースホルダー領域の確保 */
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 画像が読み込めない場合のプレースホルダーテキスト */
+        .media-item::before {
+            content: 'IMMERSNAP Demo Image (Placeholder)';
+            color: #555;
+            font-family: var(--font-heading);
+            font-size: 1.1rem;
+            position: absolute;
+            z-index: 1;
+        }
+
+        .media-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* デスクトップ用レイアウト調整 */
+        @media screen and (min-width: 768px) {
+            .image-gallery {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 20px;
+            }
+
+            .image-gallery .media-item {
+                margin-bottom: 0;
+            }
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 50px;
+            color: var(--accent-color);
+            font-family: var(--font-heading);
+            border-bottom: 1px solid transparent;
+        }
+
+        .back-link:hover {
+            border-bottom-color: var(--accent-color);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="cursor-dot"></div>
+    <div class="cursor-outline"></div>
+
+    <header class="header">
+        <div class="logo">Yuki Hamaguchi</div>
+        <nav class="nav">
+            <ul>
+                <li><a href="index.html#hero">TOP</a></li>
+                <li><a href="index.html#about">ABOUT</a></li>
+                <li><a href="index.html#works">WORKS</a></li>
+                <li><a href="index.html#contact">CONTACT</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="detail-hero"></div>
+
+        <div class="detail-container">
+            <h1 style="font-family: var(--font-heading); font-size: 2.5rem; margin-bottom: 10px;">IMMERSNAP</h1>
+            <p style="color: var(--accent-color); font-family: var(--font-heading); margin-bottom: 40px;">XR Moment Capture & Sharing</p>
+
+            <div class="project-meta">
+                <div class="meta-item">
+                    <strong>ROLE</strong>
+                    <span>Concept / Development</span>
+                </div>
+                <div class="meta-item">
+                    <strong>TECH</strong>
+                    <span>Unity / VPS / Mobile AR</span>
+                </div>
+                <div class="meta-item">
+                    <strong>YEAR</strong>
+                    <span>2025</span>
+                </div>
+            </div>
+
+            <div class="project-overview">
+                <h3 style="font-family: var(--font-heading); margin-bottom: 20px; color: var(--accent-color-2);">Concept</h3>
+                <p style="font-weight: bold; font-size: 1.2rem;">日常の空間をスキャンし、思い出をその場に保存・共有する「XRスナップ」</p>
+
+                <h3 style="font-family: var(--font-heading); margin-bottom: 20px; margin-top: 40px; color: var(--accent-color-2);">Overview</h3>
+                <p>
+                    目の前の風景や瞬間を3Dスキャン（空間保存）し、AR技術を用いてその場所に記憶を配置・共有するモバイルアプリケーションです。<br>
+                    写真や動画の枠を超え、その場の立体形状や空気感をパッケージ化して「スナップ」として保存。同じ場所を訪れた他者と、その瞬間を3Dで追体験・共有する新しいコミュニケーションを提案します。
+                </p>
+                <p>
+                    VPS（Visual Positioning System）技術により、スキャンしたデータは現実の特定の座標にピン留めされます。これにより、後からその場所を訪れた人がスマホをかざすだけで、過去にそこで記録された思い出がARとして浮かび上がります。
+                </p>
+            </div>
+
+            <div class="project-media">
+                <!-- 画像ギャラリー（仮配置） -->
+                <div class="image-gallery">
+                    <div class="media-item">
+                        <!-- 画像が見つからない場合は非表示にしてプレースホルダーを表示 -->
+                        <img src="assets/images/works/04/04-01.png" alt="IMMERSNAP Demo Image 1" onerror="this.style.display='none';">
+                    </div>
+                    <div class="media-item">
+                        <img src="assets/images/works/04/04-02.png" alt="IMMERSNAP Demo Image 2" onerror="this.style.display='none';">
+                    </div>
+                </div>
+            </div>
+
+            <a href="index.html#works" class="back-link">← BACK TO WORKS</a>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2025 XR Creator Portfolio. All Rights Reserved.</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
