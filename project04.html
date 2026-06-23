@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IMMERSNAP | Hamachan</title>
-    <meta name="description" content="IMMERSNAP - XR Moment Capture & Sharing">
+    <meta name="description" content="IMMERSNAP - AR Purikura">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -83,8 +83,10 @@
             border-radius: 10px;
             overflow: hidden;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            background: #222; /* 画像がない場合の背景色 */
-            aspect-ratio: 16/9; /* 画像がない場合のプレースホルダー領域の確保 */
+            background: #222;
+            /* 画像がない場合の背景色 */
+            aspect-ratio: 16/9;
+            /* 画像がない場合のプレースホルダー領域の確保 */
             position: relative;
             display: flex;
             align-items: center;
@@ -158,34 +160,48 @@
 
         <div class="detail-container">
             <h1 style="font-family: var(--font-heading); font-size: 2.5rem; margin-bottom: 10px;">IMMERSNAP</h1>
-            <p style="color: var(--accent-color); font-family: var(--font-heading); margin-bottom: 40px;">XR Moment Capture & Sharing</p>
+            <p style="color: var(--accent-color); font-family: var(--font-heading); margin-bottom: 40px;">XR Moment
+                Capture & Sharing</p>
 
             <div class="project-meta">
                 <div class="meta-item">
                     <strong>ROLE</strong>
-                    <span>Concept / Development</span>
+                    <span>Director / Engineer</span>
                 </div>
                 <div class="meta-item">
                     <strong>TECH</strong>
-                    <span>Unity / VPS / Mobile AR</span>
+                    <span>Unity / Web AR</span>
                 </div>
                 <div class="meta-item">
                     <strong>YEAR</strong>
-                    <span>2025</span>
+                    <span>2026</span>
                 </div>
             </div>
 
             <div class="project-overview">
+                <!-- Concept -->
                 <h3 style="font-family: var(--font-heading); margin-bottom: 20px; color: var(--accent-color-2);">Concept</h3>
-                <p style="font-weight: bold; font-size: 1.2rem;">日常の空間をスキャンし、思い出をその場に保存・共有する「XRスナップ」</p>
+                <p style="font-weight: bold; font-size: 1.2rem; margin-bottom: 10px;">静的な写真を、関係性の変化を映し出す「動的な記憶メディア」へ変革するタンジブルWebAR</p>
+                <p style="font-family: var(--font-heading); font-size: 1.0rem; color: #aaa; margin-bottom: 30px; line-height: 1.6;">
+                    Transforming static photo stickers into dynamic, evolving memories through Semantic-Driven AI and Tangible WebAR.
+                </p>
 
+                <!-- Overview -->
                 <h3 style="font-family: var(--font-heading); margin-bottom: 20px; margin-top: 40px; color: var(--accent-color-2);">Overview</h3>
                 <p>
-                    目の前の風景や瞬間を3Dスキャン（空間保存）し、AR技術を用いてその場所に記憶を配置・共有するモバイルアプリケーションです。<br>
-                    写真や動画の枠を超え、その場の立体形状や空気感をパッケージ化して「スナップ」として保存。同じ場所を訪れた他者と、その瞬間を3Dで追体験・共有する新しいコミュニケーションを提案します。
+                    IMMERSNAPは、日本の「プリクラ」文化に着想を得た、新しい記憶の振り返り体験を提案するタンジブルWebARシステムです。<br>
+                    従来の写真は撮影した瞬間の「点」しか記録できませんが、本システムはマルチモーダルAIを活用し、写真の表情やユーザーの手描きデコレーションからその場の文脈（雰囲気や感情）を抽出します。
                 </p>
-                <p>
-                    VPS（Visual Positioning System）技術により、スキャンしたデータは現実の特定の座標にピン留めされます。これにより、後からその場所を訪れた人がスマホをかざすだけで、過去にそこで記録された思い出がARとして浮かび上がります。
+                <p style="margin-bottom: 40px;">
+                    さらに、スマートフォン越しに複数枚の写真を同時にスキャンすることで、時間経過に伴う関係性の変化をクロス解析。AR空間上に過去と現在を繋ぐ「タイムラインリボン」や、AIが生成した状況に応じた動的なエフェクトを出現させます。分断されていた思い出を連続的な「線（軌跡）」へと昇華させ、対人記憶をより豊かで没入感のある体験へと拡張します。
+                </p>
+                
+                <p style="color: #aaa; line-height: 1.8; font-size: 0.95rem; margin-bottom: 20px;">
+                    IMMERSNAP is a tangible WebAR system inspired by Japanese "Purikura" (photo sticker) culture, designed to redefine the memory recall experience.<br>
+                    While conventional photography captures isolated moments as static "points" in time, IMMERSNAP leverages multimodal AI to extract situational context—such as facial expressions and hand-drawn decorations—directly from physical photo stickers.
+                </p>
+                <p style="color: #aaa; line-height: 1.8; font-size: 0.95rem;">
+                    By simultaneously scanning multiple photos with a smartphone, the system cross-analyzes semantic differences over time. It then generates dynamic AR visual effects, including an adaptive timeline ribbon that visually bridges the physical artifacts. This approach seamlessly transforms disconnected memories into a continuous "trajectory" of evolving relationships, delivering a richer and more immersive interpersonal memory experience.
                 </p>
             </div>
 
@@ -194,10 +210,12 @@
                 <div class="image-gallery">
                     <div class="media-item">
                         <!-- 画像が見つからない場合は非表示にしてプレースホルダーを表示 -->
-                        <img src="assets/images/works/04/04-01.png" alt="IMMERSNAP Demo Image 1" onerror="this.style.display='none';">
+                        <img src="assets/images/works/04/04-01.png" alt="IMMERSNAP Demo Image 1"
+                            onerror="this.style.display='none';">
                     </div>
                     <div class="media-item">
-                        <img src="assets/images/works/04/04-02.png" alt="IMMERSNAP Demo Image 2" onerror="this.style.display='none';">
+                        <img src="assets/images/works/04/04-02.png" alt="IMMERSNAP Demo Image 2"
+                            onerror="this.style.display='none';">
                     </div>
                 </div>
             </div>
