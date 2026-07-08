@@ -1,0 +1,40 @@
+---
+interface Props {
+  kicker: string;
+  title: string;
+  id?: string;
+}
+
+const { kicker, title, id } = Astro.props;
+---
+
+<div class="section-head" id={id}>
+  <p class="kicker" data-reveal>{kicker}</p>
+  <h2 class="title font-head" data-split>{title}</h2>
+  <div class="rule" data-reveal aria-hidden="true"></div>
+</div>
+
+<style>
+  .section-head {
+    margin-bottom: clamp(48px, 8vh, 80px);
+  }
+
+  .kicker {
+    margin-bottom: 14px;
+  }
+
+  .title {
+    font-size: clamp(2rem, 5.5vw, 3.4rem);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.15;
+  }
+
+  .rule {
+    margin-top: 22px;
+    width: 72px;
+    height: 2px;
+    background: var(--grad-holo);
+    border-radius: 2px;
+  }
+</style>
