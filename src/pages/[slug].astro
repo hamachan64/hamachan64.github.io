@@ -1,0 +1,359 @@
+---
+import { getCollection, render } from 'astro:content';
+import { Image } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import YouTubeEmbed from '../components/YouTubeEmbed.astro';
+
+export async function getStaticPaths() {
+  const works = (await getCollection('works')).sort(
+    (a, b) => a.data.order - b.data.order
+  );
+  return works.map((work, i) => ({
+    params: { slug: work.id },
+    props: {
+      work,
+      prev: i > 0 ? works[i - 1] : null,
+      next: i < works.length - 1 ? works[i + 1] : null,
+    },
+  }));
+}
+
+const { work, prev, next } = Astro.props;
+const { data } = work;
+const { Content } = await render(work);
+---
+
+<Base title={`${data.title} | Yuki Hamaguchi`} description={`${data.subtitle} - Project Details`}>
+  <main class="detail">
+    <!-- Hero -->
+    <div class="detail-hero">
+      {
+        data.cover && (
+          <div class="detail-hero-img" transition:name={`work-${work.id}`}>
+            <Image src={data.cover} alt={data.title} width={1600} densities={[1, 2]} loading="eager" />
+          </div>
+        )
+      }
+      <div class="detail-hero-veil" aria-hidden="true"></div>
+    </div>
+
+    <div class="detail-body container">
+      <header class="detail-head">
+        <p class="kicker" data-reveal>Project</p>
+        <h1 class="detail-title font-head" data-split>{data.title}</h1>
+        <p class="detail-sub font-head text-holo" data-reveal>{data.subtitle}</p>
+      </header>
+
+      {
+        !data.comingSoon && (data.role || data.tech || data.year) && (
+          <dl class="meta" data-reveal-group>
+            {data.role && (
+              <div class="meta-item" data-reveal>
+                <dt class="font-head">ROLE</dt>
+                <dd>{data.role}</dd>
+              </div>
+            )}
+            {data.tech && (
+              <div class="meta-item" data-reveal>
+                <dt class="font-head">TECH</dt>
+                <dd>{data.tech}</dd>
+              </div>
+            )}
+            {data.year && (
+              <div class="meta-item" data-reveal>
+                <dt class="font-head">YEAR</dt>
+                <dd>{data.year}</dd>
+              </div>
+            )}
+          </dl>
+        )
+      }
+
+      {
+        data.comingSoon ? (
+          <p class="coming-soon font-head" data-reveal>
+            Coming soon...
+          </p>
+        ) : (
+          <>
+            {data.concept && (
+              <section class="block" data-reveal>
+                <h2 class="block-title font-head">Concept</h2>
+                <p class="concept-ja">{data.concept}</p>
+                {data.conceptEn && <p class="concept-en font-head">{data.conceptEn}</p>}
+              </section>
+            )}
+
+            <section class="block prose" data-reveal>
+              <h2 class="block-title font-head">Overview</h2>
+              <Content />
+            </section>
+
+            {data.youtube && (
+              <section class="block" data-reveal>
+                <h2 class="block-title font-head">Demo Video</h2>
+                <YouTubeEmbed id={data.youtube} title={`${data.title} demo video`} aspect={data.youtubeAspect} />
+              </section>
+            )}
+
+            {data.gallery.length > 0 && (
+              <section class="block">
+                <h2 class="block-title font-head" data-reveal>
+                  Gallery
+                </h2>
+                <div class="gallery" data-reveal-group>
+                  {data.gallery.map((img, i) => (
+                    <figure class="gallery-item" data-reveal>
+                      <Image src={img} alt={`${data.title} 画像 ${i + 1}`} width={960} densities={[1, 2]} loading="lazy" />
+                    </figure>
+                  ))}
+                </div>
+              </section>
+            )}
+          </>
+        )
+      }
+
+      <!-- 前後の作品ナビ -->
+      <nav class="work-nav" aria-label="作品ナビゲーション">
+        {
+          prev && !prev.data.comingSoon ? (
+            <a class="work-nav-link prev" href={`/${prev.id}`}>
+              <span class="dir font-head">← PREV</span>
+              <span class="name">{prev.data.title}</span>
+            </a>
+          ) : (
+            <span />
+          )
+        }
+        <a class="work-nav-back font-head" href="/#works">ALL WORKS</a>
+        {
+          next && !next.data.comingSoon ? (
+            <a class="work-nav-link next" href={`/${next.id}`}>
+              <span class="dir font-head">NEXT →</span>
+              <span class="name">{next.data.title}</span>
+            </a>
+          ) : (
+            <span />
+          )
+        }
+      </nav>
+    </div>
+  </main>
+</Base>
+
+<style>
+  .detail {
+    padding-top: var(--header-h);
+  }
+
+  .detail-hero {
+    position: relative;
+    height: 56vh;
+    min-height: 320px;
+    overflow: hidden;
+  }
+
+  .detail-hero-img,
+  .detail-hero-img :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .detail-hero-veil {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, rgba(7, 7, 13, 0.15) 0%, var(--bg) 100%);
+  }
+
+  .detail-body {
+    max-width: 900px;
+    padding-block: clamp(40px, 7vh, 72px);
+  }
+
+  .detail-head {
+    margin-bottom: 40px;
+  }
+
+  .detail-title {
+    font-size: clamp(2rem, 6vw, 3.2rem);
+    font-weight: 700;
+    line-height: 1.15;
+    margin-block: 10px 8px;
+  }
+
+  .detail-sub {
+    font-size: 0.95rem;
+    font-weight: 500;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+  }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: clamp(40px, 7vh, 64px);
+  }
+
+  .meta-item {
+    padding: 14px 22px;
+    border-radius: var(--radius);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    min-width: 140px;
+  }
+
+  .meta-item dt {
+    font-size: 0.65rem;
+    letter-spacing: 0.26em;
+    background: var(--grad-holo);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    margin-bottom: 4px;
+  }
+
+  .meta-item dd {
+    font-size: 0.9rem;
+    color: var(--text);
+  }
+
+  .block {
+    margin-bottom: clamp(48px, 8vh, 72px);
+  }
+
+  .block-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    margin-bottom: 22px;
+    display: inline-block;
+    border-bottom: 2px solid transparent;
+    border-image: var(--grad-holo) 1;
+    padding-bottom: 6px;
+  }
+
+  .concept-ja {
+    font-size: 1.2rem;
+    font-weight: 700;
+    line-height: 1.9;
+    margin-bottom: 10px;
+  }
+
+  .concept-en {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    letter-spacing: 0.03em;
+  }
+
+  .prose :global(p) {
+    margin-bottom: 1.6em;
+    line-height: 2;
+  }
+
+  .prose :global(.prose-en p) {
+    color: var(--text-dim);
+    font-size: 0.92rem;
+    line-height: 1.9;
+  }
+
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+
+  .gallery-item {
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: #000;
+  }
+
+  .gallery-item :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.7s var(--ease-out);
+  }
+
+  .gallery-item:hover :global(img) {
+    transform: scale(1.04);
+  }
+
+  .coming-soon {
+    font-size: 1.4rem;
+    letter-spacing: 0.3em;
+    color: var(--text-faint);
+    padding-block: 10vh;
+    text-align: center;
+  }
+
+  .work-nav {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 20px;
+    border-top: 1px solid var(--line);
+    padding-top: 36px;
+  }
+
+  .work-nav-link {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    transition: opacity var(--dur-fast) ease;
+  }
+
+  .work-nav-link:hover {
+    opacity: 0.75;
+  }
+
+  .work-nav-link.next {
+    text-align: right;
+  }
+
+  .work-nav-link .dir {
+    font-size: 0.68rem;
+    letter-spacing: 0.24em;
+    color: var(--text-faint);
+  }
+
+  .work-nav-link .name {
+    font-size: 0.92rem;
+  }
+
+  .work-nav-back {
+    font-size: 0.78rem;
+    letter-spacing: 0.24em;
+    color: var(--text-dim);
+    border-bottom: 1px solid transparent;
+    padding-bottom: 3px;
+    transition:
+      color var(--dur-fast) ease,
+      border-color var(--dur-fast) ease;
+  }
+
+  .work-nav-back:hover {
+    color: var(--holo-1);
+    border-bottom-color: var(--holo-1);
+  }
+
+  @media (max-width: 640px) {
+    .gallery {
+      grid-template-columns: 1fr;
+    }
+
+    .work-nav {
+      grid-template-columns: 1fr;
+      justify-items: start;
+    }
+
+    .work-nav-link.next {
+      text-align: left;
+    }
+  }
+</style>

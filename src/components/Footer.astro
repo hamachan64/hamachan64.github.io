@@ -1,0 +1,52 @@
+---
+const year = new Date().getFullYear();
+---
+
+<footer class="footer">
+  <div class="container footer-inner">
+    <p class="copy font-head">&copy; {year} Yuki Hamaguchi — XR Creator Portfolio</p>
+    <div class="links">
+      <a href="https://x.com/hamaXR64" target="_blank" rel="noopener noreferrer">X</a>
+      <a href="https://www.youtube.com/@Hamachan64" target="_blank" rel="noopener noreferrer">YouTube</a>
+      <a href="https://github.com/hamachan64" target="_blank" rel="noopener noreferrer">GitHub</a>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    border-top: 1px solid var(--line);
+    padding-block: 32px;
+  }
+
+  .footer-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .copy {
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    color: var(--text-faint);
+  }
+
+  .links {
+    display: flex;
+    gap: 24px;
+  }
+
+  .links a {
+    font-family: var(--font-head);
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    color: var(--text-dim);
+    transition: color var(--dur-fast) ease;
+  }
+
+  .links a:hover {
+    color: var(--holo-1);
+  }
+</style>

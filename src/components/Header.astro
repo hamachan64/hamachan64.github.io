@@ -1,0 +1,126 @@
+---
+const links = [
+  { href: '/#hero', label: 'TOP' },
+  { href: '/#about', label: 'ABOUT' },
+  { href: '/#works', label: 'WORKS' },
+  { href: '/#contact', label: 'CONTACT' },
+];
+---
+
+<header class="header" id="site-header">
+  <a class="logo font-head" href="/#hero">
+    <span class="logo-mark" aria-hidden="true"></span>
+    Yuki Hamaguchi
+  </a>
+  <nav class="nav" aria-label="メインナビゲーション">
+    <ul>
+      {
+        links.map((l) => (
+          <li>
+            <a href={l.href}>{l.label}</a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+</header>
+
+<style>
+  .header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: var(--header-h);
+    padding-inline: clamp(20px, 4vw, 48px);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 900;
+    transition:
+      transform 0.5s var(--ease-out),
+      background 0.4s ease,
+      border-color 0.4s ease;
+    border-bottom: 1px solid transparent;
+  }
+
+  /* スクロール後：グラス化（JSが .is-scrolled を付与） */
+  .header.is-scrolled {
+    background: rgba(7, 7, 13, 0.6);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom-color: var(--line);
+  }
+
+  /* 下スクロールで隠す（JSが .is-hidden を付与） */
+  .header.is-hidden {
+    transform: translateY(-100%);
+  }
+
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: 0.06em;
+  }
+
+  .logo-mark {
+    width: 14px;
+    height: 18px;
+    border-radius: 3px;
+    background: var(--grad-holo);
+    transform: rotate(8deg);
+    box-shadow: 0 0 14px rgba(167, 139, 250, 0.5);
+  }
+
+  .nav ul {
+    display: flex;
+    gap: clamp(16px, 3vw, 36px);
+    list-style: none;
+  }
+
+  .nav a {
+    font-family: var(--font-head);
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    color: var(--text-dim);
+    position: relative;
+    padding-block: 6px;
+    transition: color var(--dur-fast) ease;
+  }
+
+  .nav a::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 1px;
+    background: var(--grad-holo);
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+    transition: transform 0.35s var(--ease-out);
+  }
+
+  .nav a:hover {
+    color: var(--text);
+  }
+
+  .nav a:hover::after {
+    transform: scaleX(1);
+  }
+
+  @media (max-width: 640px) {
+    .logo {
+      font-size: 0.95rem;
+    }
+
+    .nav a {
+      font-size: 0.7rem;
+      letter-spacing: 0.14em;
+    }
+  }
+</style>
