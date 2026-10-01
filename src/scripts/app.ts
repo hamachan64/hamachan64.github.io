@@ -100,6 +100,48 @@ function initHero() {
 }
 
 /* ==========================================================================
+   Hero 写真：鏡像側のホロがカーソルに追従（触れていない間はゆっくり漂う）
+   ========================================================================== */
+let photoCleanup: (() => void) | null = null;
+
+function initHeroPhoto() {
+  const photo = document.querySelector<HTMLElement>('[data-hero-photo]');
+  const foil = photo?.querySelector<HTMLElement>('.hero-photo-foil');
+  if (!photo || !foil || reducedMotion) return;
+
+  const pos = { x: 70, y: 40 };
+  const target = { x: 70, y: 40 };
+  let hovering = false;
+
+  const onMove = (e: PointerEvent) => {
+    const r = foil.getBoundingClientRect();
+    hovering = true;
+    target.x = ((e.clientX - r.left) / r.width) * 100;
+    target.y = ((e.clientY - r.top) / r.height) * 100;
+  };
+  const onLeave = () => (hovering = false);
+  const tick = () => {
+    if (!hovering) {
+      const t = performance.now() / 1000;
+      target.x = 55 + Math.sin(t * 0.35) * 30;
+      target.y = 40 + Math.cos(t * 0.27) * 22;
+    }
+    pos.x += (target.x - pos.x) * 0.07;
+    pos.y += (target.y - pos.y) * 0.07;
+    foil.style.setProperty('--mx', `${pos.x.toFixed(2)}%`);
+    foil.style.setProperty('--my', `${pos.y.toFixed(2)}%`);
+  };
+  photo.addEventListener('pointermove', onMove);
+  photo.addEventListener('pointerleave', onLeave);
+  gsap.ticker.add(tick);
+  photoCleanup = () => {
+    photo.removeEventListener('pointermove', onMove);
+    photo.removeEventListener('pointerleave', onLeave);
+    gsap.ticker.remove(tick);
+  };
+}
+
+/* ==========================================================================
    data-fit：見出しを親の幅いっぱいに合わせる
    ========================================================================== */
 let fitCleanup: (() => void) | null = null;
@@ -223,6 +265,7 @@ function initPage() {
   initFit();
   initReveals();
   initHero();
+  initHeroPhoto();
   initWorks();
   initFilms();
   lenis?.resize();
@@ -236,6 +279,8 @@ function destroyPage() {
   worksCleanup = null;
   fitCleanup?.();
   fitCleanup = null;
+  photoCleanup?.();
+  photoCleanup = null;
 }
 
 document.addEventListener('astro:page-load', initPage);
