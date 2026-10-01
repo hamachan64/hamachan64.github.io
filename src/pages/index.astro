@@ -3,20 +3,20 @@ import { getCollection } from 'astro:content';
 import { Image, getImage } from 'astro:assets';
 import Base from '../layouts/Base.astro';
 import Lines from '../components/Lines.astro';
-import { cardSrc } from '../lib/card';
-import myCard from '../../assets/images/works/01/01-01.png';
+import { previewSrc } from '../lib/images';
 import portraitWide from '../../assets/images/profile.jpg';
 import portraitTall from '../../assets/images/profile_t.jpg';
 
 const works = (await getCollection('works')).sort((a, b) => a.data.order - b.data.order);
 const released = works.filter((w) => !w.data.comingSoon);
+const pad = (n: number) => String(n).padStart(2, '0');
 
 const rows = await Promise.all(
   works.map(async (w) => {
     const img = w.data.card ?? w.data.cover;
     return {
       id: w.id,
-      no: String(w.data.order).padStart(2, '0'),
+      no: pad(w.data.order),
       title: w.data.title,
       subtitle: w.data.subtitle,
       tech: w.data.tech,
@@ -24,18 +24,20 @@ const rows = await Promise.all(
       comingSoon: w.data.comingSoon,
       cover: w.data.cover,
       focus: w.data.cardFocus,
-      src: img && !w.data.comingSoon ? await cardSrc(img) : undefined,
+      src: img && !w.data.comingSoon ? await previewSrc(img) : undefined,
     };
   })
 );
 // 未発表の枠
-const slots = [rows.length + 1, rows.length + 2].map((n) => String(n).padStart(2, '0'));
+const slots = [rows.length + 1, rows.length + 2].map(pad);
+const first = rows.find((r) => r.src)!;
 
-const heroSrc = await cardSrc(myCard);
-// Hero の写真：PC は横長、モバイルは縦長（どちらも本人と鏡像の構図）
+// Hero：PC は横長、モバイルは縦長。どちらも本人と鏡像が向かい合う構図
 const wide = await getImage({ src: portraitWide, widths: [720, 1024], format: 'webp', quality: 86 });
 const tall = await getImage({ src: portraitTall, widths: [480, 682], format: 'webp', quality: 86 });
-const firstWork = rows.find((r) => r.src)!;
+// 継ぎ目（本人と鏡像の境）の位置。画像幅に対する割合
+const PORTRAIT_SEAM = 0.4902; // profile.jpg
+const PORTRAIT_SEAM_TALL = 0.4912; // profile_t.jpg
 
 // 名前は1文字ずつ立ち上げる
 const nameLines = ['Yuki', 'Hamaguchi'].map((w) =>
@@ -50,7 +52,17 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
   <main id="top">
     <!-- ================================ HERO ================================ -->
     <section class="hero wrap" aria-label="Introduction">
-      <figure class="hero-photo" data-clip data-manual data-hero-photo>
+      <figure
+        class="hero-photo glass"
+        data-glass
+        data-src={wide.src}
+        data-seam={PORTRAIT_SEAM}
+        data-src-tall={tall.src}
+        data-seam-tall={PORTRAIT_SEAM_TALL}
+        data-focus="0.5 0.32"
+        data-clip
+        data-manual
+      >
         <picture>
           <source media="(max-width: 760px)" srcset={tall.srcSet.attribute} sizes="100vw" />
           <img
@@ -63,10 +75,9 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
             fetchpriority="high"
           />
         </picture>
-        <span class="hero-photo-foil" aria-hidden="true"></span>
         <figcaption class="hero-photo-caps" aria-hidden="true">
-          <span class="label">(A) Physical</span>
-          <span class="label">(B) Virtual</span>
+          <span>Physical</span>
+          <span>Virtual</span>
         </figcaption>
       </figure>
 
@@ -79,103 +90,105 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
           delay={560}
           manual
         />
-        <p class="hero-en en-note" data-fade data-manual style="--d: 760ms">
+        <p class="hero-en" data-fade data-manual style="--d: 760ms">
           Immersive experiences that begin<br />with a single card in your hand.
-        </p>
-        <p class="hero-meta label" data-fade data-manual style="--d: 840ms">
-          Based in Tokyo<br />
-          <a href="#works" class="ul label-ink">Selected works <span class="num">01—{String(released.length).padStart(2, '0')}</span></a>
         </p>
       </div>
 
-      <div class="hero-card card-anchor" data-card style="aspect-ratio: 639 / 1005">
-        <img src={heroSrc} alt="Yuki Hamaguchi の AR 名刺カード" width="639" height="1005" />
-      </div>
+      <p class="hero-meta label" data-fade data-manual style="--d: 840ms">
+        Based in Tokyo<br />
+        <a href="#works" class="ul label-ink">Selected works <span class="num">01—{pad(released.length)}</span></a>
+      </p>
 
       <Lines as="h1" class="hero-name display by-char" lines={nameLines} manual delay={350} data-fit />
 
-      <p class="hero-scroll label" data-fade data-manual style="--d: 900ms" aria-hidden="true">
-        <span>Scroll to explore</span>
-        <span class="hero-scroll-index num">No. 064 — はまちゃん</span>
-        <span class="hero-scroll-arrow">↓</span>
+      <p class="hero-scroll label" data-fade data-manual style="--d: 1100ms">
+        <a href="#about">Scroll</a>
+        <span class="hero-hint"><span class="hint-fine">Touch</span><span class="hint-touch">Tap</span> the reflection</span>
+        <span class="hero-scroll-arrow" aria-hidden="true">↓</span>
       </p>
     </section>
 
     <!-- ================================ ABOUT =============================== -->
     <section id="about" class="about wrap">
-      <div class="grid">
-        <p class="sec-label label" data-fade><span class="num">(01)</span> About</p>
-        <Lines
-          as="h2"
-          class="about-statement statement"
-          lines={['カードは、手のひらに収まる', 'いちばん小さな世界の入口。', 'XR の技術で、その向こう側を', 'つくっています。']}
-        />
-      </div>
+      <header class="sec-head">
+        <h2 class="label label-ink">About</h2>
+        <span class="label">日本語 / English</span>
+      </header>
 
-      <div class="grid about-body">
-        <div class="about-card-col">
-          <div class="about-card card-anchor" data-card data-face="back" style="aspect-ratio: 63 / 88" aria-hidden="true"></div>
-          <p class="label about-caption">Yuki Hamaguchi — Tokyo, JP</p>
+      <div class="grid about-mirror">
+        <div class="about-ja" lang="ja">
+          <Lines
+            as="p"
+            class="statement"
+            lines={['カードは、手のひらに収まる', 'いちばん小さな世界の入口。', 'XR の技術で、その向こう側を', 'つくっています。']}
+          />
+          <div class="about-body jp">
+            <p>
+              東京を拠点に活動する XR エンジニア／クリエイター。XR 技術をコアに据え、カードをはじめとする物理メディアへ体験を落とし込むことで、現実の延長線上にある非日常をデザインしています。
+            </p>
+            <p>触れられるものと、触れられないもの。その境界で人の心が動く瞬間をつくることが、私のテーマです。</p>
+          </div>
         </div>
 
-        <div class="about-text">
-          <p class="jp about-lead" data-fade>
-            東京を拠点に活動する XR エンジニア／クリエイター。XR 技術をコアに据え、カードをはじめとする物理メディアへ体験を落とし込むことで、現実の延長線上にある非日常をデザインしています。
-          </p>
-          <p class="jp" data-fade>
-            触れられるものと、触れられないもの。その境界で人の心が動く瞬間をつくることが、私のテーマです。
-          </p>
-          <p class="en-note" data-fade>
-            I'm a Tokyo-based XR engineer and creator. With XR at the core, I translate experiences into
-            physical media — cards above all — to design the extraordinary that sits just beyond everyday reality.
-          </p>
-
-          <div class="about-lists">
-            <div data-fade>
-              <h3 class="label">Disciplines</h3>
-              <ul>{disciplines.map((d) => <li>{d}</li>)}</ul>
-            </div>
-            <div data-fade style="--d: 120ms">
-              <h3 class="label">Tools</h3>
-              <ul>{tools.map((d) => <li>{d}</li>)}</ul>
-            </div>
+        <div class="about-en" lang="en">
+          <Lines
+            as="p"
+            class="statement-en"
+            lines={['A card is the smallest', 'doorway to a world —', 'one that fits in your palm.', 'I build what lies beyond it.']}
+            delay={160}
+          />
+          <div class="about-body">
+            <p>
+              I'm a Tokyo-based XR engineer and creator. With XR at the core, I translate experiences into physical
+              media — cards above all — to design the extraordinary that sits just beyond everyday reality.
+            </p>
           </div>
+        </div>
+      </div>
+
+      <div class="grid about-lists">
+        <div>
+          <h3 class="label">Disciplines</h3>
+          <ul>{disciplines.map((d) => <li>{d}</li>)}</ul>
+        </div>
+        <div>
+          <h3 class="label">Tools</h3>
+          <ul>{tools.map((d) => <li>{d}</li>)}</ul>
         </div>
       </div>
     </section>
 
     <!-- ================================ WORKS =============================== -->
     <section id="works" class="works wrap">
-      <div class="grid works-head">
-        <p class="sec-label label" data-fade><span class="num">(02)</span> Selected Works</p>
-        <h2 class="works-title display">
-          <Lines as="span" lines={['Works']} />
-          <sup class="works-count num" data-fade style="--d: 300ms">({String(released.length).padStart(2, '0')})</sup>
-        </h2>
-      </div>
+      <header class="sec-head">
+        <h2 class="label label-ink">Selected Works</h2>
+        <span class="label num">2025—2026 · {pad(released.length)} projects</span>
+      </header>
 
       <div class="grid works-body">
         <ol class="works-list" data-works>
           {
             rows.map((r) =>
               r.comingSoon ? (
-                <li class="row is-soon" data-row data-fade>
+                <li class="row is-soon" data-row data-caption={`${r.no} — In development`}>
                   <span class="row-no label num">{r.no}</span>
                   <span class="row-main">
-                    <span class="row-title jp">{r.title}</span>
+                    <span class="row-title">{r.title}</span>
                     <span class="row-sub label">{r.subtitle}</span>
                   </span>
                   <span class="row-tech label">In development</span>
                   <span class="row-year label">—</span>
                 </li>
               ) : (
-                <li data-fade>
+                <li>
                   <a
                     class="row"
                     href={`/${r.id}`}
                     data-row
-                    data-card-preload={r.src}
+                    data-preview={r.src}
                     data-focus={r.focus}
+                    data-caption={`${r.no} — ${r.subtitle}`}
                   >
                     {r.cover && (
                       <span class="row-thumb" data-clip>
@@ -184,7 +197,7 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
                     )}
                     <span class="row-no label num">{r.no}</span>
                     <span class="row-main">
-                      <span class="row-title jp">
+                      <span class="row-title">
                         {r.title}
                         <span class="row-arrow" aria-hidden="true">
                           →
@@ -201,10 +214,10 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
           }
           {
             slots.map((n) => (
-              <li class="row is-soon is-slot" data-row data-fade>
+              <li class="row is-soon is-slot" data-row data-caption={`${n} — Coming soon`}>
                 <span class="row-no label num">{n}</span>
                 <span class="row-main">
-                  <span class="row-title">Coming soon</span>
+                  <span class="row-title label">Coming soon</span>
                 </span>
                 <span class="row-tech label" />
                 <span class="row-year label">—</span>
@@ -213,17 +226,13 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
           }
         </ol>
 
-        <div class="works-card-col" aria-hidden="true">
-          <div class="works-card-sticky">
-            <div
-              class="works-card card-anchor"
-              data-card
-              data-works-card
-              data-src={firstWork.src}
-              data-focus={firstWork.focus}
-            >
-              <img src={firstWork.src} alt="" loading="lazy" />
-            </div>
+        <div class="works-preview-col" aria-hidden="true">
+          <div class="works-preview-sticky">
+            <figure class="works-preview glass" data-glass data-works-preview data-src={first.src} data-focus={first.focus}>
+              <img src={first.src} alt="" loading="lazy" />
+              <span class="works-preview-empty label">In development</span>
+            </figure>
+            <p class="works-preview-cap label num" data-preview-cap>{first.no} — {rows[0].subtitle}</p>
           </div>
         </div>
       </div>
@@ -231,20 +240,18 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
 
     <!-- =============================== CONTACT ============================== -->
     <section id="contact" class="contact wrap">
-      <div class="grid">
-        <p class="sec-label label" data-fade><span class="num">(03)</span> Contact</p>
-        <div class="contact-main">
-          <Lines as="h2" class="contact-title display" lines={['Have a card', 'in mind?']} />
-          <p class="jp contact-lead" data-fade>
-            制作のご相談・コラボレーションなど、お気軽にご連絡ください。
-          </p>
-          <a class="contact-mail" href="mailto:yuuki.hama2186@gmail.com" data-fade>
+      <header class="sec-head">
+        <h2 class="label label-ink">Contact</h2>
+        <span class="label">Available for collaborations</span>
+      </header>
+      <div class="grid contact-body">
+        <Lines as="p" class="contact-title" lines={['Have a card', 'in mind?']} />
+        <div class="contact-side">
+          <p class="jp contact-lead">制作のご相談・コラボレーションなど、お気軽にご連絡ください。</p>
+          <a class="contact-mail" href="mailto:yuuki.hama2186@gmail.com">
             <span class="ul">yuuki.hama2186@gmail.com</span>
             <span class="contact-mail-arrow" aria-hidden="true">↗</span>
           </a>
-        </div>
-        <div class="contact-card-col">
-          <div class="contact-card card-anchor" data-card data-face="back" style="aspect-ratio: 63 / 88" aria-hidden="true"></div>
         </div>
       </div>
     </section>
@@ -268,72 +275,13 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
   .hero-photo {
     grid-column: 4 / -1;
     grid-row: 1 / span 2;
-    position: relative;
     margin: 0;
-    overflow: hidden;
     background: #161615;
   }
 
   .hero-photo img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
     object-position: 50% 32%;
     filter: contrast(1.1) brightness(0.98);
-  }
-
-  @supports (animation-timeline: view()) {
-    @media (prefers-reduced-motion: no-preference) {
-      .hero-photo picture {
-        display: block;
-        height: 100%;
-        animation: photo-drift linear both;
-        animation-timeline: view();
-        animation-range: exit 0% exit 100%;
-      }
-    }
-  }
-
-  @keyframes photo-drift {
-    to {
-      transform: translateY(14%) scale(1.06);
-    }
-  }
-
-  /* 鏡像側（仮想の自分）にだけ、カーソルに沿ってホロの色が差す */
-  .hero-photo-foil {
-    --mx: 70%;
-    --my: 40%;
-    position: absolute;
-    inset: 0 0 0 49.6%;
-    pointer-events: none;
-    mix-blend-mode: color;
-    opacity: 0.6;
-    background: linear-gradient(
-        115deg,
-        #7fd8ff 0%,
-        #c3a6ff 22%,
-        #ff9fd2 44%,
-        #ffe08a 62%,
-        #8dffc8 80%,
-        #7fd8ff 100%
-      )
-      var(--mx) 50% / 260% 100%;
-    -webkit-mask-image: radial-gradient(
-      circle at var(--mx) var(--my),
-      #000 0,
-      rgba(0, 0, 0, 0.75) 18%,
-      rgba(0, 0, 0, 0.22) 55%,
-      rgba(0, 0, 0, 0.12) 100%
-    );
-    mask-image: radial-gradient(
-      circle at var(--mx) var(--my),
-      #000 0,
-      rgba(0, 0, 0, 0.75) 18%,
-      rgba(0, 0, 0, 0.22) 55%,
-      rgba(0, 0, 0, 0.12) 100%
-    );
-    transition: opacity 0.6s ease;
   }
 
   .hero-photo-caps {
@@ -341,10 +289,9 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
     inset: 14px 16px auto;
     display: flex;
     justify-content: space-between;
-  }
-
-  .hero-photo-caps .label {
-    color: rgba(235, 233, 228, 0.72);
+    font-size: 12px;
+    color: rgba(235, 233, 228, 0.7);
+    pointer-events: none;
   }
 
   .hero-left {
@@ -352,6 +299,7 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
     grid-row: 1;
     align-self: start;
     padding-top: clamp(16px, 3vh, 32px);
+    padding-right: 8px;
   }
 
   .hero-left > .label:first-child {
@@ -370,25 +318,15 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
     margin-top: 14px;
     color: var(--mute);
     font-size: 13px;
+    line-height: 1.6;
   }
 
   .hero-meta {
-    margin-top: 28px;
-    line-height: 1.9;
-  }
-
-  /* 脇役のカード（自分の AR 名刺） */
-  .hero-card {
-    grid-column: 1 / span 2;
+    grid-column: 1 / span 3;
     grid-row: 1;
     align-self: end;
-    width: clamp(116px, 10.5vw, 168px);
-    margin-bottom: clamp(20px, 3vh, 36px);
-    transform: rotate(-4deg);
-  }
-
-  html.gl-ready .hero-card {
-    transform: none;
+    margin-bottom: clamp(20px, 3vh, 32px);
+    line-height: 1.7;
   }
 
   .hero-name {
@@ -401,6 +339,7 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
     white-space: nowrap;
     margin-left: -0.03em;
     padding-bottom: 0.02em;
+    pointer-events: none;
     /* 写真の上では白、紙の上では墨になる */
     color: #fff;
     mix-blend-mode: difference;
@@ -423,15 +362,15 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
     align-items: center;
     padding-block: 14px 18px;
     border-top: 1px solid var(--line-strong);
+    color: var(--ink);
   }
 
-  .hero-scroll-index {
-    text-transform: none;
+  .hero-hint {
+    color: var(--mute);
   }
 
   .hero-scroll-arrow {
     justify-self: end;
-    color: var(--ink);
     animation: nudge 2.4s var(--ease) infinite;
   }
 
@@ -446,73 +385,104 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
     }
   }
 
-  /* =============================== Shared =============================== */
-  .sec-label {
-    grid-column: 1 / span 3;
-    padding-top: 0.7em;
+  .hint-touch {
+    display: none;
   }
 
-  .sec-label .num {
-    color: var(--ink);
-    margin-right: 0.6em;
+  @media (hover: none) {
+    .hint-fine {
+      display: none;
+    }
+
+    .hint-touch {
+      display: inline;
+    }
+  }
+
+  /* =============================== Shared =============================== */
+  .sec-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--gutter);
+    padding-top: 12px;
+    border-top: 1px solid var(--line-strong);
+    margin-bottom: clamp(56px, 10vh, 120px);
+  }
+
+  .sec-head h2 {
+    font-weight: 500;
   }
 
   /* =============================== About =============================== */
   .about {
-    padding-block: clamp(120px, 20vh, 220px) clamp(100px, 16vh, 180px);
+    padding-top: clamp(120px, 20vh, 220px);
   }
 
-  .about-statement {
-    grid-column: 4 / -1;
+  .about-mirror {
+    row-gap: 64px;
+  }
+
+  .about-ja {
+    grid-column: 1 / span 6;
+    padding-right: clamp(0px, 3vw, 48px);
+  }
+
+  .about-en {
+    grid-column: 7 / span 6;
+    padding-left: clamp(0px, 1vw, 16px);
+  }
+
+  .statement-en {
+    font-family: var(--f-sans);
+    font-weight: 450;
+    font-size: clamp(26px, 3.1vw, 50px);
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+    /* 和文の行と高さをそろえる */
+    padding-top: 0.18em;
+  }
+
+  .about-ja .statement {
+    font-size: clamp(24px, 2.75vw, 44px);
   }
 
   .about-body {
-    margin-top: clamp(80px, 14vh, 160px);
-    align-items: start;
-  }
-
-  .about-card-col {
-    grid-column: 1 / span 3;
-  }
-
-  .about-card {
-    width: 100%;
-    max-width: 300px;
-  }
-
-  .about-caption {
-    margin-top: 16px;
-    white-space: nowrap;
-  }
-
-  .about-text {
-    grid-column: 6 / span 6;
+    margin-top: clamp(40px, 6vh, 64px);
+    max-width: 34em;
     display: grid;
-    gap: 1.4em;
-    font-size: 16px;
+    gap: 1.2em;
+    font-size: 15px;
     line-height: 2;
+    color: var(--ink-2);
   }
 
-  .about-lead {
-    font-size: clamp(17px, 1.35vw, 20px);
-    line-height: 1.95;
+  .about-en .about-body {
+    line-height: 1.75;
+    max-width: 30em;
   }
 
   .about-lists {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--gutter);
-    margin-top: 2.2em;
+    margin-top: clamp(80px, 12vh, 140px);
+  }
+
+  .about-lists > div {
+    grid-column: span 6;
   }
 
   .about-lists h3 {
     padding-bottom: 10px;
-    margin-bottom: 6px;
     border-bottom: 1px solid var(--line-strong);
   }
 
+  .about-lists ul {
+    columns: 2;
+    column-gap: var(--gutter);
+  }
+
   .about-lists li {
-    padding-block: 7px;
+    break-inside: avoid;
+    padding-block: 9px;
     border-bottom: 1px solid var(--line);
     font-size: 14px;
     line-height: 1.5;
@@ -520,33 +490,7 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
 
   /* =============================== Works =============================== */
   .works {
-    padding-block: clamp(60px, 10vh, 120px) clamp(120px, 20vh, 200px);
-  }
-
-  .works-head {
-    align-items: end;
-    margin-bottom: clamp(40px, 7vh, 80px);
-  }
-
-  .works-head .sec-label {
-    align-self: start;
-  }
-
-  .works-title {
-    grid-column: 4 / -1;
-    font-size: clamp(96px, 17vw, 300px);
-    display: flex;
-    align-items: flex-start;
-  }
-
-  .works-count {
-    font-family: var(--f-mono);
-    font-size: clamp(12px, 1.1vw, 16px);
-    font-weight: 400;
-    letter-spacing: 0;
-    margin-left: 0.6em;
-    margin-top: 0.4em;
-    vertical-align: top;
+    padding-block: clamp(140px, 22vh, 240px) clamp(120px, 20vh, 200px);
   }
 
   .works-body {
@@ -554,24 +498,23 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
   }
 
   .works-list {
-    grid-column: 1 / span 8;
+    grid-column: 1 / span 7;
     border-bottom: 1px solid var(--line);
   }
 
   .row {
     position: relative;
     display: grid;
-    grid-template-columns: 3.4em minmax(0, 1fr) 15em 4em;
+    grid-template-columns: 3em minmax(0, 1fr) 14em 3.4em;
     align-items: baseline;
     column-gap: var(--gutter);
-    padding-block: 28px 30px;
+    padding-block: 26px 28px;
     border-top: 1px solid var(--line);
     transition: opacity 0.5s var(--ease-out);
   }
 
-  li:first-child > .row,
-  .row:first-child {
-    border-top-color: var(--line-strong);
+  li:first-child > .row {
+    border-top: 0;
   }
 
   .row-thumb {
@@ -580,15 +523,15 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
 
   .row-main {
     display: grid;
-    gap: 6px;
+    gap: 4px;
   }
 
   .row-title {
     font-family: var(--f-sans);
-    font-size: clamp(20px, 2vw, 30px);
+    font-size: clamp(20px, 1.9vw, 28px);
     font-weight: 500;
     line-height: 1.3;
-    letter-spacing: 0.02em;
+    letter-spacing: -0.005em;
     display: inline-flex;
     align-items: baseline;
     gap: 0.4em;
@@ -596,7 +539,6 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
   }
 
   .row-arrow {
-    font-family: var(--f-sans);
     font-weight: 400;
     opacity: 0;
     transform: translateX(-0.6em);
@@ -605,42 +547,37 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
       transform 0.7s var(--ease-out);
   }
 
+  .row-no,
+  .row-year {
+    color: var(--ink);
+  }
+
   .row-year {
     text-align: right;
-    color: var(--ink);
   }
 
-  .row-no {
-    color: var(--ink);
-  }
-
-  .is-soon {
-    color: var(--mute);
-  }
-
+  .is-soon,
   .is-soon .row-no,
   .is-soon .row-year {
     color: var(--mute);
   }
 
-  .is-slot .row-title {
-    font-family: var(--f-mono);
-    font-size: 13px;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+  .is-slot {
+    padding-block: 14px 16px;
   }
 
-  .is-slot {
-    padding-block: 16px 18px;
+  .is-slot .row-title {
+    font-size: 12px;
+    font-weight: 450;
   }
 
   @media (hover: hover) {
     .works-list.is-hovering .row:not(.is-active) {
-      opacity: 0.28;
+      opacity: 0.3;
     }
 
     a.row.is-active .row-title {
-      transform: translateX(14px);
+      transform: translateX(12px);
     }
 
     a.row.is-active .row-arrow {
@@ -649,52 +586,77 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
     }
   }
 
-  .works-card-col {
-    grid-column: 10 / -1;
+  .works-preview-col {
+    grid-column: 9 / -1;
     height: 100%;
   }
 
-  .works-card-sticky {
+  .works-preview-sticky {
     position: sticky;
-    top: calc(50svh - min(26vw, 470px) * 1.25 / 2 + var(--header-h) / 3);
+    top: calc(var(--header-h) + 24px);
   }
 
-  .works-card {
-    width: 100%;
-    max-width: 380px;
+  .works-preview {
+    margin: 0;
     aspect-ratio: 4 / 5;
-    margin-left: auto;
+    max-height: calc(100svh - var(--header-h) - 96px);
+    background: var(--paper-2);
+  }
+
+  .works-preview-empty {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    opacity: 0;
+    transition: opacity 0.6s ease;
+  }
+
+  .works-preview.is-empty .works-preview-empty {
+    opacity: 1;
+    transition-delay: 0.5s;
+  }
+
+  .works-preview-cap {
+    margin-top: 12px;
+    color: var(--ink);
   }
 
   /* ============================== Contact ============================== */
   .contact {
-    padding-bottom: clamp(80px, 12vh, 140px);
+    padding-bottom: clamp(100px, 16vh, 180px);
   }
 
-  .contact > .grid {
-    border-top: 1px solid var(--line-strong);
-    padding-top: clamp(80px, 14vh, 140px);
-  }
-
-  .contact-main {
-    grid-column: 4 / span 6;
+  .contact-body {
+    align-items: end;
+    row-gap: 48px;
   }
 
   .contact-title {
-    font-size: clamp(64px, 10vw, 180px);
+    grid-column: 1 / span 8;
+    font-family: var(--f-sans);
+    font-weight: 500;
+    font-size: clamp(56px, 9.4vw, 168px);
+    line-height: 0.94;
+    letter-spacing: -0.045em;
+  }
+
+  .contact-side {
+    grid-column: 9 / -1;
+    padding-bottom: 0.6em;
   }
 
   .contact-lead {
-    margin-top: clamp(28px, 4vh, 48px);
-    font-size: 15px;
+    font-size: 14px;
+    color: var(--ink-2);
   }
 
   .contact-mail {
     display: inline-flex;
     align-items: baseline;
     gap: 0.3em;
-    margin-top: 14px;
-    font-size: clamp(20px, 2.6vw, 40px);
+    margin-top: 16px;
+    font-size: clamp(18px, 1.7vw, 26px);
     font-weight: 500;
     letter-spacing: -0.01em;
   }
@@ -707,42 +669,22 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
     transform: translate(0.12em, -0.12em);
   }
 
-  .contact-card-col {
-    grid-column: 11 / -1;
-    align-self: end;
-  }
-
-  .contact-card {
-    width: 100%;
-    max-width: 200px;
-    margin-left: auto;
-    transform: rotate(4deg);
-  }
-
-  html.gl-ready .contact-card {
-    transform: none;
-  }
-
   /* ============================== Tablet ============================== */
   @media (max-width: 1100px) {
     .row {
-      grid-template-columns: 2.6em minmax(0, 1fr) 4em;
+      grid-template-columns: 2.6em minmax(0, 1fr) 3.4em;
     }
 
     .row-tech {
       display: none;
     }
 
-    .works-list {
-      grid-column: 1 / span 7;
+    .contact-title {
+      grid-column: 1 / -1;
     }
 
-    .works-card-col {
-      grid-column: 9 / -1;
-    }
-
-    .about-text {
-      grid-column: 5 / -1;
+    .contact-side {
+      grid-column: 1 / span 8;
     }
   }
 
@@ -752,7 +694,7 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
       height: auto;
       min-height: 100svh;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      grid-template-rows: auto auto auto auto;
+      grid-template-rows: auto auto auto auto auto;
     }
 
     .hero-photo {
@@ -761,19 +703,6 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
       aspect-ratio: 682 / 1024;
       max-height: 72svh;
       width: 100%;
-    }
-
-    .hero-photo-foil {
-      inset: 0 0 0 49%;
-    }
-
-    .hero-card {
-      grid-column: 3 / -1;
-      grid-row: 1;
-      align-self: end;
-      justify-self: end;
-      width: 20vw;
-      margin: 0 12px 12px 0;
     }
 
     .hero-name {
@@ -794,52 +723,38 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
     .hero-left {
       grid-column: 1 / -1;
       grid-row: 3;
-      padding-block: 28px 32px;
+      padding-block: 28px 20px;
     }
 
-    .hero-scroll {
-      grid-row: 4;
-      grid-template-columns: 1fr auto;
-    }
-
-    .hero-scroll-index {
-      display: none;
-    }
-
-    .sec-label {
+    .hero-meta {
       grid-column: 1 / -1;
+      grid-row: 4;
       margin-bottom: 28px;
     }
 
-    .about-statement {
+    .hero-scroll {
+      grid-row: 5;
+    }
+
+    .about-ja,
+    .about-en {
       grid-column: 1 / -1;
-      font-size: clamp(22px, 6.4vw, 30px);
+      padding: 0;
     }
 
-    .about-card-col {
-      grid-column: 1 / span 2;
-    }
-
-    .about-text {
+    .about-lists > div {
       grid-column: 1 / -1;
-      margin-top: 48px;
     }
 
-    .about-lists {
-      grid-template-columns: 1fr;
-      gap: 32px;
-    }
-
-    .works-title {
-      grid-column: 1 / -1;
-      font-size: 30vw;
+    .about-lists > div + div {
+      margin-top: 40px;
     }
 
     .works-list {
       grid-column: 1 / -1;
     }
 
-    .works-card-col {
+    .works-preview-col {
       display: none;
     }
 
@@ -863,18 +778,8 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
       object-fit: cover;
     }
 
-    .contact-main {
+    .contact-side {
       grid-column: 1 / -1;
-    }
-
-    .contact-card-col {
-      grid-column: 3 / -1;
-      grid-row: 1;
-      margin-bottom: 24px;
-    }
-
-    .contact-card {
-      max-width: 110px;
     }
   }
 </style>

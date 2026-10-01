@@ -1,20 +1,16 @@
 ---
 import Base from '../layouts/Base.astro';
-import Lines from '../components/Lines.astro';
 ---
 
 <Base title="404 — Yuki Hamaguchi">
-  <main id="top" class="nf wrap grid">
+  <main id="top" class="nf wrap">
+    <p class="nf-code display" aria-label="404">
+      <span>404</span><span class="nf-mirror" aria-hidden="true">404</span>
+    </p>
     <div class="nf-text">
-      <p class="label" data-fade data-manual>Error 404</p>
-      <Lines as="h1" class="nf-title display" lines={['This card', 'does not exist.']} manual delay={100} />
-      <p class="jp nf-lead" data-fade data-manual style="--d: 400ms">
-        お探しのページは見つかりませんでした。カードはまだ刷られていないようです。
-      </p>
-      <a class="label label-ink ul" href="/" data-fade data-manual style="--d: 500ms">← Back to index</a>
-    </div>
-    <div class="nf-card-col">
-      <div class="nf-card card-anchor" data-card data-face="back" style="aspect-ratio: 63 / 88" aria-hidden="true"></div>
+      <h1 class="jp nf-lead">お探しのページは、鏡の向こう側にも見つかりませんでした。</h1>
+      <p class="label">This page doesn’t exist — on either side of the mirror.</p>
+      <a class="label label-ink ul" href="/">Back to index</a>
     </div>
   </main>
 </Base>
@@ -23,41 +19,41 @@ import Lines from '../components/Lines.astro';
   .nf {
     min-height: 100svh;
     padding-top: var(--header-h);
-    align-items: center;
+    display: grid;
+    align-content: center;
+    gap: 40px;
+  }
+
+  .nf-code {
+    display: flex;
+    font-size: clamp(120px, 26vw, 420px);
+    border-bottom: 1px solid var(--line-strong);
+  }
+
+  .nf-code span {
+    flex: 1;
+    text-align: right;
+    padding-right: 0.06em;
+  }
+
+  /* 継ぎ目を挟んだ鏡像（反転するので、右寄せ＋右罫線が継ぎ目側に来る） */
+  .nf-mirror {
+    transform: scaleX(-1);
+    color: transparent;
+    -webkit-text-stroke: 1px var(--ink);
+    border-right: 1px solid var(--line-strong);
   }
 
   .nf-text {
-    grid-column: 1 / span 7;
     display: grid;
-    gap: 28px;
+    gap: 14px;
     justify-items: start;
+    max-width: 36em;
   }
 
-  .nf-title {
-    font-size: clamp(56px, 9vw, 160px);
-  }
-
-  .nf-card-col {
-    grid-column: 9 / span 3;
-  }
-
-  .nf-card {
-    width: 100%;
-    max-width: 280px;
-    margin-inline: auto;
-  }
-
-  @media (max-width: 760px) {
-    .nf-text,
-    .nf-card-col {
-      grid-column: 1 / -1;
-    }
-
-    .nf-card-col {
-      grid-row: 1;
-      width: 44vw;
-      justify-self: center;
-      margin-top: 32px;
-    }
+  .nf-lead {
+    font-size: clamp(18px, 1.8vw, 24px);
+    font-weight: 500;
+    line-height: 1.6;
   }
 </style>

@@ -40,6 +40,11 @@ const links = [
     /* 紙・写真・カードのどこに重なっても読めるよう反転合成 */
     color: #fff;
     mix-blend-mode: difference;
+    transition: transform 0.6s var(--ease-out);
+  }
+
+  .header:global(.is-hidden) {
+    transform: translateY(-100%);
   }
 
   .header :global(.label) {

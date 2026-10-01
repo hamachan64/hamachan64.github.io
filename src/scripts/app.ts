@@ -1,15 +1,15 @@
 /**
  * サイト全体のモーション制御
- * - Lenis（慣性スクロール）と WebGL カードはセッションを通して1つだけ生成し、
- *   Astro の ClientRouter でページが切り替わってもそのまま生き続ける。
- * - ページ固有の処理は astro:page-load で初期化、astro:before-swap で破棄する。
+ * - Lenis（慣性スクロール）はセッションを通して1つだけ生成する。
+ * - ページ固有の処理（Glass、リビール、Works のプレビュー）は
+ *   astro:page-load で初期化し、astro:before-swap で破棄する。
  */
 import gsap from 'gsap';
 import Lenis from 'lenis';
-import { SpatialCard, supportsWebGL } from './card-gl';
+import { Glass, canUseGlass } from './glass';
 
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-const root = document.documentElement;
+const useGlass = !reducedMotion && canUseGlass();
 
 /* ==========================================================================
    Lenis
@@ -34,65 +34,86 @@ document.addEventListener('click', (e) => {
   history.replaceState(null, '', url.hash);
 });
 
-/* ==========================================================================
-   WebGL カード
-   ========================================================================== */
-let card: SpatialCard | null = null;
-const canvas = document.getElementById('gl') as HTMLCanvasElement | null;
+const cleanups: Array<() => void> = [];
 
-if (canvas && supportsWebGL()) {
-  try {
-    card = new SpatialCard(canvas, {
-      reducedMotion,
-      getVelocity: () => lenis?.velocity ?? 0,
-    });
-    gsap.ticker.add(() => card!.render(performance.now()));
-  } catch (err) {
-    console.warn('[card] WebGL disabled:', err);
-    card = null;
-  }
+/* ==========================================================================
+   Glass：[data-glass] の画像を WebGL で描く（細かいポインタ操作ができる環境のみ）
+   ========================================================================== */
+const glasses = new WeakMap<HTMLElement, Glass>();
+
+function initGlass() {
+  if (!useGlass) return;
+  document.querySelectorAll<HTMLElement>('[data-glass]').forEach((el) => {
+    // 登場の演出は WebGL 側で行うので、CSS のクリップは外す
+    el.removeAttribute('data-clip');
+    el.removeAttribute('data-manual');
+    const focus = (el.dataset.focus || '0.5 0.5').split(/\s+/).map(Number) as [number, number];
+    // 縦長の差し替え画像があれば、モバイルではそちらを使う（<picture> と同じ切り替え）
+    const tall = !!el.dataset.srcTall && window.matchMedia('(max-width: 760px)').matches;
+    const seam = tall ? el.dataset.seamTall : el.dataset.seam;
+    try {
+      const g = new Glass(el, {
+        src: tall ? el.dataset.srcTall! : el.dataset.src!,
+        focus,
+        seam: seam ? Number(seam) : undefined,
+        getVelocity: () => lenis?.velocity ?? 0,
+      });
+      glasses.set(el, g);
+      cleanups.push(() => g.destroy());
+    } catch (err) {
+      console.warn('[glass] disabled:', err);
+    }
+  });
 }
+
+/* ==========================================================================
+   ヘッダー：下へスクロール中は隠し、戻ると出す
+   ========================================================================== */
+const header = document.querySelector<HTMLElement>('.header');
+let lastY = window.scrollY;
+window.addEventListener(
+  'scroll',
+  () => {
+    const y = window.scrollY;
+    if (header) {
+      if (y > 160 && y > lastY + 4) header.classList.add('is-hidden');
+      else if (y < lastY - 4 || y <= 160) header.classList.remove('is-hidden');
+    }
+    lastY = y;
+  },
+  { passive: true }
+);
 
 /* ==========================================================================
    リビール（IntersectionObserver で .is-in を付与するだけ。動きは CSS）
    ========================================================================== */
-let io: IntersectionObserver | null = null;
-
 function initReveals() {
   const targets = document.querySelectorAll<HTMLElement>('[data-lines], [data-fade], [data-clip]');
   if (reducedMotion) {
     targets.forEach((el) => el.classList.add('is-in'));
     return;
   }
-  io = new IntersectionObserver(
+  const io = new IntersectionObserver(
     (entries) => {
       entries.forEach((entry) => {
         if (!entry.isIntersecting) return;
         entry.target.classList.add('is-in');
-        io?.unobserve(entry.target);
+        io.unobserve(entry.target);
       });
     },
-    { rootMargin: '0px 0px -8% 0px', threshold: 0 }
+    { rootMargin: '0px 0px -8% 0px' }
   );
   targets.forEach((el) => {
-    if (el.hasAttribute('data-manual')) return;
-    io!.observe(el);
+    if (!el.hasAttribute('data-manual')) io.observe(el);
   });
+  cleanups.push(() => io.disconnect());
 }
 
-/* ==========================================================================
-   Hero：フォントが揃ってから一斉に立ち上げる
-   ========================================================================== */
-function initHero() {
+/* Hero：フォントが揃ってから一斉に立ち上げる */
+function initIntro() {
   const manual = document.querySelectorAll<HTMLElement>('[data-manual]');
-  if (manual.length === 0) {
-    card?.intro(0.1);
-    return;
-  }
-  const go = () => {
-    manual.forEach((el) => el.classList.add('is-in'));
-    card?.intro(0.35);
-  };
+  if (manual.length === 0) return;
+  const go = () => manual.forEach((el) => el.classList.add('is-in'));
   if (reducedMotion) return go();
   Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 1200))]).then(() =>
     requestAnimationFrame(go)
@@ -100,52 +121,8 @@ function initHero() {
 }
 
 /* ==========================================================================
-   Hero 写真：鏡像側のホロがカーソルに追従（触れていない間はゆっくり漂う）
-   ========================================================================== */
-let photoCleanup: (() => void) | null = null;
-
-function initHeroPhoto() {
-  const photo = document.querySelector<HTMLElement>('[data-hero-photo]');
-  const foil = photo?.querySelector<HTMLElement>('.hero-photo-foil');
-  if (!photo || !foil || reducedMotion) return;
-
-  const pos = { x: 70, y: 40 };
-  const target = { x: 70, y: 40 };
-  let hovering = false;
-
-  const onMove = (e: PointerEvent) => {
-    const r = foil.getBoundingClientRect();
-    hovering = true;
-    target.x = ((e.clientX - r.left) / r.width) * 100;
-    target.y = ((e.clientY - r.top) / r.height) * 100;
-  };
-  const onLeave = () => (hovering = false);
-  const tick = () => {
-    if (!hovering) {
-      const t = performance.now() / 1000;
-      target.x = 55 + Math.sin(t * 0.35) * 30;
-      target.y = 40 + Math.cos(t * 0.27) * 22;
-    }
-    pos.x += (target.x - pos.x) * 0.07;
-    pos.y += (target.y - pos.y) * 0.07;
-    foil.style.setProperty('--mx', `${pos.x.toFixed(2)}%`);
-    foil.style.setProperty('--my', `${pos.y.toFixed(2)}%`);
-  };
-  photo.addEventListener('pointermove', onMove);
-  photo.addEventListener('pointerleave', onLeave);
-  gsap.ticker.add(tick);
-  photoCleanup = () => {
-    photo.removeEventListener('pointermove', onMove);
-    photo.removeEventListener('pointerleave', onLeave);
-    gsap.ticker.remove(tick);
-  };
-}
-
-/* ==========================================================================
    data-fit：見出しを親の幅いっぱいに合わせる
    ========================================================================== */
-let fitCleanup: (() => void) | null = null;
-
 function initFit() {
   const els = Array.from(document.querySelectorAll<HTMLElement>('[data-fit]'));
   if (els.length === 0) return;
@@ -163,20 +140,21 @@ function initFit() {
   fit();
   document.fonts.ready.then(fit);
   window.addEventListener('resize', fit);
-  fitCleanup = () => window.removeEventListener('resize', fit);
+  cleanups.push(() => window.removeEventListener('resize', fit));
 }
 
 /* ==========================================================================
-   Works インデックス：行ホバー / スクロール位置でカードの絵柄を切り替え
+   Works：行ホバー / スクロール位置でプレビューを切り替える
    ========================================================================== */
-let worksCleanup: (() => void) | null = null;
-
 function initWorks() {
   const list = document.querySelector<HTMLElement>('[data-works]');
-  const anchor = document.querySelector<HTMLElement>('[data-works-card]');
-  if (!list || !anchor) return;
+  const preview = document.querySelector<HTMLElement>('[data-works-preview]');
+  const cap = document.querySelector<HTMLElement>('[data-preview-cap]');
+  if (!list || !preview) return;
   const rows = Array.from(list.querySelectorAll<HTMLElement>('[data-row]'));
-  const fallbackImg = anchor.querySelector('img');
+  const fallbackImg = preview.querySelector('img');
+  const glass = glasses.get(preview);
+  glass?.preload(rows.map((r) => r.dataset.preview).filter(Boolean) as string[]);
   let hovering = false;
   let current: HTMLElement | null = null;
 
@@ -184,15 +162,12 @@ function initWorks() {
     if (row === current) return;
     current = row;
     rows.forEach((r) => r.classList.toggle('is-active', r === row));
-    const src = row.dataset.cardPreload;
-    if (src) {
-      delete anchor.dataset.face;
-      anchor.dataset.src = src;
-      anchor.dataset.focus = row.dataset.focus || '0.5 0.5';
-      if (fallbackImg) fallbackImg.src = src;
-    } else {
-      anchor.dataset.face = 'back';
-    }
+    if (cap) cap.textContent = row.dataset.caption ?? '';
+    const src = row.dataset.preview;
+    preview.classList.toggle('is-empty', !src);
+    const focus = (row.dataset.focus || '0.5 0.5').split(/\s+/).map(Number) as [number, number];
+    if (glass) glass.show(src ?? 'blank', focus);
+    else if (fallbackImg && src) fallbackImg.src = src;
   };
 
   const onEnter = (e: Event) => {
@@ -200,7 +175,7 @@ function initWorks() {
     list.classList.add('is-hovering');
     activate(e.currentTarget as HTMLElement);
   };
-  const onLeaveList = () => {
+  const onLeave = () => {
     hovering = false;
     list.classList.remove('is-hovering');
   };
@@ -208,12 +183,12 @@ function initWorks() {
     r.addEventListener('pointerenter', onEnter);
     r.addEventListener('focus', onEnter);
   });
-  list.addEventListener('pointerleave', onLeaveList);
+  list.addEventListener('pointerleave', onLeave);
 
   // ホバーしていない間は、画面中央に最も近い行をアクティブに
   const onScroll = () => {
     if (hovering) return;
-    const mid = window.innerHeight * 0.5;
+    const mid = window.innerHeight * 0.45;
     let best = rows[0];
     let bestD = Infinity;
     for (const r of rows) {
@@ -228,11 +203,10 @@ function initWorks() {
   };
   onScroll();
   window.addEventListener('scroll', onScroll, { passive: true });
-
-  worksCleanup = () => {
+  cleanups.push(() => {
     window.removeEventListener('scroll', onScroll);
-    list.removeEventListener('pointerleave', onLeaveList);
-  };
+    list.removeEventListener('pointerleave', onLeave);
+  });
 }
 
 /* ==========================================================================
@@ -243,9 +217,8 @@ function initFilms() {
     btn.addEventListener(
       'click',
       () => {
-        const id = btn.dataset.film!;
         const iframe = document.createElement('iframe');
-        iframe.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&playsinline=1`;
+        iframe.src = `https://www.youtube-nocookie.com/embed/${btn.dataset.film}?autoplay=1&rel=0&playsinline=1`;
         iframe.title = btn.getAttribute('aria-label') || 'Film';
         iframe.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
         iframe.allowFullscreen = true;
@@ -260,43 +233,29 @@ function initFilms() {
 /* ==========================================================================
    ページのライフサイクル
    ========================================================================== */
-function initPage() {
-  card?.scan();
+document.addEventListener('astro:page-load', () => {
+  initGlass();
   initFit();
   initReveals();
-  initHero();
-  initHeroPhoto();
+  initIntro();
   initWorks();
   initFilms();
   lenis?.resize();
-  if (card) root.classList.add('gl-ready');
-}
+});
 
-function destroyPage() {
-  io?.disconnect();
-  io = null;
-  worksCleanup?.();
-  worksCleanup = null;
-  fitCleanup?.();
-  fitCleanup = null;
-  photoCleanup?.();
-  photoCleanup = null;
-}
+document.addEventListener('astro:before-swap', () => {
+  cleanups.forEach((fn) => fn());
+  cleanups.length = 0;
+});
 
-document.addEventListener('astro:page-load', initPage);
-document.addEventListener('astro:before-swap', destroyPage);
-
-// 遷移前に紙面をそっと下げる（カードは残って次のページへ移動する）
+// 遷移前に紙面をそっと下げる
 document.addEventListener('astro:before-preparation', (ev) => {
   const main = document.querySelector('main');
   if (!main || reducedMotion) return;
   const original = ev.loader;
   ev.loader = async () => {
     lenis?.stop();
-    await Promise.all([
-      original(),
-      gsap.to(main, { opacity: 0, y: -24, duration: 0.55, ease: 'power2.in' }),
-    ]);
+    await Promise.all([original(), gsap.to(main, { opacity: 0, y: -24, duration: 0.55, ease: 'power2.in' })]);
   };
 });
 

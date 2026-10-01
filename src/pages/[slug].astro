@@ -4,7 +4,7 @@ import { Image } from 'astro:assets';
 import Base from '../layouts/Base.astro';
 import Lines from '../components/Lines.astro';
 import Film from '../components/Film.astro';
-import { cardSrc } from '../lib/card';
+import { previewSrc } from '../lib/images';
 
 export async function getStaticPaths() {
   const works = (await getCollection('works')).sort((a, b) => a.data.order - b.data.order);
@@ -21,7 +21,7 @@ const { data } = work;
 const { Content } = await render(work);
 const no = String(data.order).padStart(2, '0');
 const cardImg = data.card ?? data.cover;
-const src = cardImg ? await cardSrc(cardImg) : undefined;
+const src = cardImg ? await previewSrc(cardImg) : undefined;
 const meta = [
   { k: 'Role', v: data.role },
   { k: 'Tech', v: data.tech },
@@ -45,17 +45,17 @@ const meta = [
         <Lines as="h1" class="d-title jp" lines={[data.title]} manual delay={120} />
       </div>
 
-      <div class="d-card-col">
-        {
-          src ? (
-            <div class="d-card card-anchor" data-card data-src={src} data-focus={data.cardFocus}>
-              <img src={src} alt={data.title} loading="eager" />
-            </div>
-          ) : (
-            <div class="d-card card-anchor" data-card data-face="back" aria-hidden="true" />
-          )
-        }
-      </div>
+      {
+        src ? (
+          <figure class="d-visual glass" data-glass data-src={src} data-focus={data.cardFocus} data-clip data-manual>
+            <img src={src} alt={data.title} loading="eager" />
+          </figure>
+        ) : (
+          <div class="d-visual d-visual-empty" aria-hidden="true">
+            <span class="label">In development</span>
+          </div>
+        )
+      }
 
       {
         meta.length > 0 && (
@@ -76,7 +76,7 @@ const meta = [
         <section class="wrap grid d-block">
           <p class="d-label label">Status</p>
           <div class="d-col">
-            <Lines as="p" class="statement" lines={['いま、カードを刷っています。']} />
+            <Lines as="p" class="statement" lines={['ただいま制作中です。']} />
             <p class="en-note d-en" data-fade>
               In development. Coming soon.
             </p>
@@ -178,7 +178,7 @@ const meta = [
   }
 
   .d-hero-text {
-    grid-column: 1 / span 8;
+    grid-column: 1 / span 7;
     grid-row: 2;
     align-self: end;
   }
@@ -196,21 +196,22 @@ const meta = [
     letter-spacing: -0.01em;
   }
 
-  .d-card-col {
-    grid-column: 9 / -1;
+  .d-visual {
+    grid-column: 8 / -1;
     grid-row: 2 / span 2;
-    align-self: center;
+    margin: 0;
+    min-height: 0;
+    height: calc(100svh - var(--header-h) - 96px);
+    background: var(--paper-2);
   }
 
-  .d-card {
-    width: 100%;
-    max-width: 400px;
-    aspect-ratio: 4 / 5;
-    margin-left: auto;
+  .d-visual-empty {
+    display: grid;
+    place-items: center;
   }
 
   .d-meta {
-    grid-column: 1 / span 8;
+    grid-column: 1 / span 7;
     grid-row: 3;
     display: grid;
     grid-template-columns: 1fr 1.6fr 0.6fr;
@@ -381,11 +382,11 @@ const meta = [
       grid-template-rows: auto auto auto auto;
     }
 
-    .d-card-col {
+    .d-visual {
       grid-column: 1 / -1;
       grid-row: 2;
-      justify-self: center;
-      width: 62vw;
+      height: auto;
+      aspect-ratio: 4 / 5;
     }
 
     .d-hero-text {

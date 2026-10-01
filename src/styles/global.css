@@ -1,12 +1,9 @@
 /* ==========================================================================
    Fonts（セルフホスト）
    - Archivo: 欧文ディスプレイ／本文（wdth 軸で名前を長体に）
-   - IBM Plex Mono: ラベル・メタ情報
    - Zen Kaku Gothic New: 和文本文 / Zen Old Mincho: 和文ステートメント
    ========================================================================== */
 @import '@fontsource-variable/archivo/wdth.css';
-@import '@fontsource/ibm-plex-mono/400.css';
-@import '@fontsource/ibm-plex-mono/500.css';
 @import '@fontsource/zen-kaku-gothic-new/400.css';
 @import '@fontsource/zen-kaku-gothic-new/500.css';
 @import '@fontsource/zen-kaku-gothic-new/700.css';
@@ -15,7 +12,7 @@
 
 /* ==========================================================================
    Tokens
-   紙（現実）はモノクロ。色を持つのは WebGL のカード（仮想）だけ。
+   紙とモノクロ写真（現実）が基調。色は、鏡像（仮想）に触れたときの光の干渉にだけ現れる。
    ========================================================================== */
 :root {
   --paper: #ebe9e4;
@@ -29,7 +26,6 @@
   --f-sans: 'Archivo Variable', 'Zen Kaku Gothic New', system-ui, sans-serif;
   --f-jp: 'Zen Kaku Gothic New', 'Archivo Variable', sans-serif;
   --f-min: 'Zen Old Mincho', serif;
-  --f-mono: 'IBM Plex Mono', 'Zen Kaku Gothic New', monospace;
 
   --margin: clamp(16px, 2.8vw, 40px);
   --gutter: clamp(12px, 1.6vw, 24px);
@@ -150,12 +146,12 @@ ol {
    Type
    ========================================================================== */
 .label {
-  font-family: var(--f-mono);
-  font-size: 11px;
-  font-weight: 400;
+  font-family: var(--f-sans);
+  font-size: 12px;
+  font-weight: 450;
   line-height: 1.5;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0.005em;
+  font-variant-numeric: tabular-nums;
   color: var(--mute);
 }
 
@@ -289,43 +285,37 @@ html.js [data-clip]:not(.is-in) img {
 }
 
 /* ==========================================================================
-   Card anchor
-   WebGL カードが追従する DOM の“置き場所”。WebGL 非対応時は中の画像をそのまま表示。
+   Glass（WebGL で描く画像の器）
+   中の <img> はレイアウト・代替テキスト・WebGL 非対応時の表示を担う。
    ========================================================================== */
-.card-anchor {
+.glass {
   position: relative;
-  border-radius: 4.6% / 3.3%;
   overflow: hidden;
-  background: var(--paper-2);
-  box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.45);
 }
 
-.card-anchor > img {
+.glass > img,
+.glass > picture,
+.glass > picture > img {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.card-anchor[data-face='back'] {
-  background: var(--ink);
-}
-
-html.gl-ready .card-anchor {
-  background: none;
-  box-shadow: none;
-}
-
-html.gl-ready .card-anchor > img {
-  opacity: 0;
-}
-
-#gl {
-  position: fixed;
+.glass-canvas {
+  position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  z-index: 40;
-  pointer-events: none;
+}
+
+.glass.is-gl {
+  background: none !important;
+}
+
+.glass.is-gl > img,
+.glass.is-gl > picture {
+  visibility: hidden;
 }
 
 @media (prefers-reduced-motion: reduce) {
