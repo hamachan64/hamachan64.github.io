@@ -14,6 +14,7 @@ gallery:
   - ../../../assets/images/works/04/04-04.JPG
 youtube: hztfVEbLj9Y
 youtubeAspect: vertical
+card: ../../../assets/images/works/04/04-02.JPG
 order: 4
 ---
 

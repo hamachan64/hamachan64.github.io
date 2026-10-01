@@ -13,6 +13,7 @@ gallery:
   - ../../../assets/images/works/05/05-03.jpg
 youtube: 9Kdja1OVgYo
 youtubeAspect: vertical
+cardFocus: "0.52 0.5"
 order: 5
 ---
 

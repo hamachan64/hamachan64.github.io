@@ -1,427 +1,263 @@
 /**
  * サイト全体のモーション制御
- * - Lenis: 慣性スムーススクロール（セッション中1回だけ生成）
- * - GSAP + ScrollTrigger: スクロール連動アニメーション（ページ遷移ごとに再構築）
- * - Astro ClientRouter(View Transitions) と共存するため、
- *   astro:page-load で初期化 / astro:before-swap で破棄する
+ * - Lenis（慣性スクロール）と WebGL カードはセッションを通して1つだけ生成し、
+ *   Astro の ClientRouter でページが切り替わってもそのまま生き続ける。
+ * - ページ固有の処理は astro:page-load で初期化、astro:before-swap で破棄する。
  */
 import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import Lenis from 'lenis';
-
-gsap.registerPlugin(ScrollTrigger);
+import { SpatialCard, supportsWebGL } from './card-gl';
 
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
-
-document.documentElement.classList.add('js');
+const root = document.documentElement;
 
 /* ==========================================================================
-   Lenis（永続・1インスタンス）
+   Lenis
    ========================================================================== */
 let lenis: Lenis | null = null;
-
 if (!reducedMotion) {
-  lenis = new Lenis({ lerp: 0.1 });
-  lenis.on('scroll', ScrollTrigger.update);
+  lenis = new Lenis({ lerp: 0.09, wheelMultiplier: 0.9 });
   gsap.ticker.add((time) => lenis!.raf(time * 1000));
   gsap.ticker.lagSmoothing(0);
 }
 
-// 同一ページ内アンカーは Lenis でスムーススクロール
 document.addEventListener('click', (e) => {
   const link = (e.target as Element).closest?.('a[href*="#"]') as HTMLAnchorElement | null;
-  if (!link || !lenis) return;
+  if (!link) return;
   const url = new URL(link.href, location.href);
   if (url.pathname !== location.pathname || !url.hash) return;
-  const target = document.querySelector(url.hash);
+  const target = document.querySelector<HTMLElement>(url.hash);
   if (!target) return;
   e.preventDefault();
-  lenis.scrollTo(target as HTMLElement, { offset: -64 });
-  history.pushState(null, '', url.hash);
+  if (lenis) lenis.scrollTo(target, { duration: 1.6, easing: (t) => 1 - Math.pow(1 - t, 4) });
+  else target.scrollIntoView();
+  history.replaceState(null, '', url.hash);
 });
 
 /* ==========================================================================
-   ユーティリティ: テキストを .word / .char に分解
+   WebGL カード
    ========================================================================== */
-function splitText(el: HTMLElement): HTMLElement[] {
-  if (el.dataset.splitDone === '1') {
-    return Array.from(el.querySelectorAll<HTMLElement>('.char'));
+let card: SpatialCard | null = null;
+const canvas = document.getElementById('gl') as HTMLCanvasElement | null;
+
+if (canvas && supportsWebGL()) {
+  try {
+    card = new SpatialCard(canvas, {
+      reducedMotion,
+      getVelocity: () => lenis?.velocity ?? 0,
+    });
+    gsap.ticker.add(() => card!.render(performance.now()));
+  } catch (err) {
+    console.warn('[card] WebGL disabled:', err);
+    card = null;
   }
-  el.dataset.splitDone = '1';
-  el.setAttribute('aria-label', el.textContent?.replace(/\s+/g, ' ').trim() ?? '');
+}
 
-  const chars: HTMLElement[] = [];
-  const frag = document.createDocumentFragment();
+/* ==========================================================================
+   リビール（IntersectionObserver で .is-in を付与するだけ。動きは CSS）
+   ========================================================================== */
+let io: IntersectionObserver | null = null;
 
-  el.childNodes.forEach((node) => {
-    if (node.nodeType === Node.TEXT_NODE) {
-      const tokens = (node.textContent ?? '').split(/(\s+)/);
-      tokens.forEach((token) => {
-        if (!token) return;
-        if (/^\s+$/.test(token)) {
-          frag.appendChild(document.createTextNode(' '));
-          return;
-        }
-        const word = document.createElement('span');
-        word.className = 'word';
-        word.setAttribute('aria-hidden', 'true');
-        for (const ch of token) {
-          const span = document.createElement('span');
-          span.className = 'char';
-          span.textContent = ch;
-          word.appendChild(span);
-          chars.push(span);
-        }
-        frag.appendChild(word);
+function initReveals() {
+  const targets = document.querySelectorAll<HTMLElement>('[data-lines], [data-fade], [data-clip]');
+  if (reducedMotion) {
+    targets.forEach((el) => el.classList.add('is-in'));
+    return;
+  }
+  io = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('is-in');
+        io?.unobserve(entry.target);
       });
-    } else {
-      // <br> などはそのまま維持
-      frag.appendChild(node.cloneNode(true));
-    }
+    },
+    { rootMargin: '0px 0px -8% 0px', threshold: 0 }
+  );
+  targets.forEach((el) => {
+    if (el.hasAttribute('data-manual')) return;
+    io!.observe(el);
   });
-
-  el.replaceChildren(frag);
-  return chars;
 }
 
 /* ==========================================================================
-   パーティクル（ホログラフィックの光の粒）
+   Hero：フォントが揃ってから一斉に立ち上げる
    ========================================================================== */
-let particleRaf = 0;
-let particleResize: (() => void) | null = null;
-
-function initParticles() {
-  const canvas = document.getElementById('holo-particles') as HTMLCanvasElement | null;
-  if (!canvas || reducedMotion) return;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-
-  const HUES = [190, 260, 320, 150]; // cyan / violet / pink / mint
-  const COUNT = Math.min(60, Math.floor(window.innerWidth / 24));
-  let w = 0;
-  let h = 0;
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-
-  type P = { x: number; y: number; r: number; vy: number; vx: number; hue: number; tw: number; t: number };
-  let dots: P[] = [];
-
-  const spawn = (): P => ({
-    x: Math.random() * w,
-    y: Math.random() * h,
-    r: 0.8 + Math.random() * 2.2,
-    vy: 0.12 + Math.random() * 0.35,
-    vx: (Math.random() - 0.5) * 0.15,
-    hue: HUES[Math.floor(Math.random() * HUES.length)],
-    tw: 0.4 + Math.random() * 0.6,
-    t: Math.random() * Math.PI * 2,
-  });
-
-  const resize = () => {
-    w = canvas.offsetWidth;
-    h = canvas.offsetHeight;
-    canvas.width = w * dpr;
-    canvas.height = h * dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    dots = Array.from({ length: COUNT }, spawn);
-  };
-  resize();
-  particleResize = resize;
-  window.addEventListener('resize', resize);
-
-  const tick = () => {
-    ctx.clearRect(0, 0, w, h);
-    for (const p of dots) {
-      p.y -= p.vy;
-      p.x += p.vx;
-      p.t += 0.02;
-      if (p.y < -8) {
-        p.y = h + 8;
-        p.x = Math.random() * w;
-      }
-      const alpha = (0.25 + 0.55 * Math.abs(Math.sin(p.t))) * p.tw;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fillStyle = `hsla(${p.hue}, 95%, 75%, ${alpha})`;
-      ctx.shadowColor = `hsla(${p.hue}, 95%, 70%, ${alpha})`;
-      ctx.shadowBlur = 8;
-      ctx.fill();
-      ctx.shadowBlur = 0;
-    }
-    particleRaf = requestAnimationFrame(tick);
-  };
-  particleRaf = requestAnimationFrame(tick);
-}
-
-function destroyParticles() {
-  cancelAnimationFrame(particleRaf);
-  if (particleResize) {
-    window.removeEventListener('resize', particleResize);
-    particleResize = null;
+function initHero() {
+  const manual = document.querySelectorAll<HTMLElement>('[data-manual]');
+  if (manual.length === 0) {
+    card?.intro(0.1);
+    return;
   }
+  const go = () => {
+    manual.forEach((el) => el.classList.add('is-in'));
+    card?.intro(0.35);
+  };
+  if (reducedMotion) return go();
+  Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 1200))]).then(() =>
+    requestAnimationFrame(go)
+  );
 }
 
 /* ==========================================================================
-   カスタムカーソル
+   data-fit：見出しを親の幅いっぱいに合わせる
    ========================================================================== */
-let cursorMove: ((e: PointerEvent) => void) | null = null;
-let cursorOver: ((e: Event) => void) | null = null;
-let cursorOut: ((e: Event) => void) | null = null;
+let fitCleanup: (() => void) | null = null;
 
-function initCursor() {
-  if (!finePointer || reducedMotion) return;
-  const dot = document.querySelector<HTMLElement>('.cursor-dot');
-  const ring = document.querySelector<HTMLElement>('.cursor-ring');
-  if (!dot || !ring) return;
-
-  const ringX = gsap.quickTo(ring, 'x', { duration: 0.35, ease: 'power3.out' });
-  const ringY = gsap.quickTo(ring, 'y', { duration: 0.35, ease: 'power3.out' });
-
-  cursorMove = (e: PointerEvent) => {
-    gsap.set(dot, { x: e.clientX, y: e.clientY });
-    ringX(e.clientX);
-    ringY(e.clientY);
+function initFit() {
+  const els = Array.from(document.querySelectorAll<HTMLElement>('[data-fit]'));
+  if (els.length === 0) return;
+  const fit = () => {
+    els.forEach((el) => {
+      el.style.fontSize = '';
+      const base = parseFloat(getComputedStyle(el).fontSize);
+      const avail = el.clientWidth;
+      el.style.width = 'max-content';
+      const natural = el.getBoundingClientRect().width;
+      el.style.width = '';
+      if (natural > 0) el.style.fontSize = `${(base * avail) / natural}px`;
+    });
   };
-  window.addEventListener('pointermove', cursorMove);
-
-  const HOVER = 'a, button, .holo-card, .hero-card';
-  cursorOver = (e: Event) => {
-    if ((e.target as Element).closest?.(HOVER)) document.body.classList.add('cursor-hover');
-  };
-  cursorOut = (e: Event) => {
-    if ((e.target as Element).closest?.(HOVER)) document.body.classList.remove('cursor-hover');
-  };
-  document.addEventListener('mouseover', cursorOver);
-  document.addEventListener('mouseout', cursorOut);
-}
-
-function destroyCursor() {
-  if (cursorMove) window.removeEventListener('pointermove', cursorMove);
-  if (cursorOver) document.removeEventListener('mouseover', cursorOver);
-  if (cursorOut) document.removeEventListener('mouseout', cursorOut);
-  cursorMove = cursorOver = cursorOut = null;
-  document.body.classList.remove('cursor-hover');
+  fit();
+  document.fonts.ready.then(fit);
+  window.addEventListener('resize', fit);
+  fitCleanup = () => window.removeEventListener('resize', fit);
 }
 
 /* ==========================================================================
-   3Dチルト＋ホロ光沢（トレカのホロ加工）
+   Works インデックス：行ホバー / スクロール位置でカードの絵柄を切り替え
    ========================================================================== */
-function initTilt() {
-  if (!finePointer || reducedMotion) return;
-  const cards = document.querySelectorAll<HTMLElement>('.holo-card.is-link, .hero-card');
+let worksCleanup: (() => void) | null = null;
 
-  cards.forEach((card) => {
-    const strength = card.classList.contains('hero-card') ? 10 : 7;
+function initWorks() {
+  const list = document.querySelector<HTMLElement>('[data-works]');
+  const anchor = document.querySelector<HTMLElement>('[data-works-card]');
+  if (!list || !anchor) return;
+  const rows = Array.from(list.querySelectorAll<HTMLElement>('[data-row]'));
+  const fallbackImg = anchor.querySelector('img');
+  let hovering = false;
+  let current: HTMLElement | null = null;
 
-    card.addEventListener('pointermove', (e) => {
-      const rect = card.getBoundingClientRect();
-      const px = (e.clientX - rect.left) / rect.width;
-      const py = (e.clientY - rect.top) / rect.height;
-      card.style.setProperty('--mx', `${px * 100}%`);
-      card.style.setProperty('--my', `${py * 100}%`);
-      card.style.setProperty('--ry', `${(px - 0.5) * strength * 2}deg`);
-      card.style.setProperty('--rx', `${(0.5 - py) * strength * 2}deg`);
-    });
+  const activate = (row: HTMLElement) => {
+    if (row === current) return;
+    current = row;
+    rows.forEach((r) => r.classList.toggle('is-active', r === row));
+    const src = row.dataset.cardPreload;
+    if (src) {
+      delete anchor.dataset.face;
+      anchor.dataset.src = src;
+      anchor.dataset.focus = row.dataset.focus || '0.5 0.5';
+      if (fallbackImg) fallbackImg.src = src;
+    } else {
+      anchor.dataset.face = 'back';
+    }
+  };
 
-    card.addEventListener('pointerleave', () => {
-      card.style.setProperty('--rx', '0deg');
-      card.style.setProperty('--ry', '0deg');
-    });
+  const onEnter = (e: Event) => {
+    hovering = true;
+    list.classList.add('is-hovering');
+    activate(e.currentTarget as HTMLElement);
+  };
+  const onLeaveList = () => {
+    hovering = false;
+    list.classList.remove('is-hovering');
+  };
+  rows.forEach((r) => {
+    r.addEventListener('pointerenter', onEnter);
+    r.addEventListener('focus', onEnter);
   });
-}
+  list.addEventListener('pointerleave', onLeaveList);
 
-/* ==========================================================================
-   ヘッダー＋スクロールプログレス
-   ========================================================================== */
-function initChrome() {
-  const header = document.getElementById('site-header');
-  const progress = document.querySelector<HTMLElement>('.scroll-progress');
-  let lastY = window.scrollY;
-
+  // ホバーしていない間は、画面中央に最も近い行をアクティブに
   const onScroll = () => {
-    const y = window.scrollY;
-    if (header) {
-      header.classList.toggle('is-scrolled', y > 10);
-      if (y > 300 && y > lastY + 4) header.classList.add('is-hidden');
-      else if (y < lastY - 4 || y <= 300) header.classList.remove('is-hidden');
+    if (hovering) return;
+    const mid = window.innerHeight * 0.5;
+    let best = rows[0];
+    let bestD = Infinity;
+    for (const r of rows) {
+      const b = r.getBoundingClientRect();
+      const d = Math.abs(b.top + b.height / 2 - mid);
+      if (d < bestD) {
+        bestD = d;
+        best = r;
+      }
     }
-    if (progress) {
-      const max = document.documentElement.scrollHeight - window.innerHeight;
-      progress.style.transform = `scaleX(${max > 0 ? y / max : 0})`;
-    }
-    lastY = y;
+    activate(best);
   };
   onScroll();
   window.addEventListener('scroll', onScroll, { passive: true });
-  cleanups.push(() => window.removeEventListener('scroll', onScroll));
+
+  worksCleanup = () => {
+    window.removeEventListener('scroll', onScroll);
+    list.removeEventListener('pointerleave', onLeaveList);
+  };
 }
 
 /* ==========================================================================
-   スクロール連動アニメーション
+   Film：クリックまで YouTube を読み込まない
    ========================================================================== */
-function initScrollAnimations() {
-  // data-reveal: .is-inview を一度だけ付与（CSSトランジションで出現）
-  document.querySelectorAll<HTMLElement>('[data-reveal-group]').forEach((group) => {
-    group.querySelectorAll<HTMLElement>('[data-reveal]').forEach((el, i) => {
-      el.style.setProperty('--reveal-delay', `${i * 0.09}s`);
-    });
-  });
-
-  document.querySelectorAll<HTMLElement>('[data-reveal]').forEach((el) => {
-    if (reducedMotion) {
-      el.classList.add('is-inview');
-      return;
-    }
-    ScrollTrigger.create({
-      trigger: el,
-      start: 'top 88%',
-      once: true,
-      onEnter: () => el.classList.add('is-inview'),
-    });
-  });
-
-  // data-split: 見出しの文字分解リビール
-  document.querySelectorAll<HTMLElement>('[data-split]').forEach((el) => {
-    const chars = splitText(el);
-    if (reducedMotion || chars.length === 0) return;
-    gsap.to(chars, {
-      y: 0,
-      duration: 0.9,
-      ease: 'expo.out',
-      stagger: 0.028,
-      scrollTrigger: { trigger: el, start: 'top 88%', once: true },
-    });
-  });
-
-  // Works カード: 奥からスタッガー出現
-  const workCards = gsap.utils.toArray<HTMLElement>('[data-work-card]');
-  if (workCards.length > 0 && !reducedMotion) {
-    ScrollTrigger.batch(workCards, {
-      start: 'top 90%',
-      once: true,
-      onEnter: (batch) =>
-        gsap.to(batch, {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          duration: 1,
-          ease: 'expo.out',
-          stagger: 0.1,
-        }),
-    });
-  }
-}
-
-/* ==========================================================================
-   Hero イントロ＋パララックス
-   ========================================================================== */
-function initHero() {
-  const hero = document.getElementById('hero');
-  if (!hero) return;
-
-  const title = hero.querySelector<HTMLElement>('[data-split-hero]');
-  const fades = hero.querySelectorAll<HTMLElement>('[data-hero-fade]');
-  const card = hero.querySelector<HTMLElement>('[data-hero-card]');
-
-  if (reducedMotion) return;
-
-  const chars = title ? splitText(title) : [];
-  const tl = gsap.timeline({ defaults: { ease: 'expo.out' } });
-
-  if (chars.length > 0) {
-    tl.from(chars, {
-      yPercent: 115,
-      duration: 1.1,
-      stagger: 0.04,
-    });
-  }
-  if (card) {
-    tl.from(card, { opacity: 0, y: 60, rotate: -4, duration: 1.2 }, 0.25);
-  }
-  if (fades.length > 0) {
-    tl.from(fades, { opacity: 0, y: 26, duration: 0.9, stagger: 0.12 }, 0.55);
-  }
-
-  // 文字マスク（overflow hidden）用ラッパー
-  title?.querySelectorAll<HTMLElement>('.word').forEach((w) => {
-    w.style.overflow = 'hidden';
-    w.style.verticalAlign = 'bottom';
-  });
-
-  // パララックス：カードとテキストが異なる速度で流れる
-  if (card) {
-    gsap.to(card, {
-      yPercent: -14,
-      ease: 'none',
-      scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: 0.4 },
-    });
-  }
-  const heroText = hero.querySelector('.hero-text');
-  if (heroText) {
-    gsap.to(heroText, {
-      yPercent: 10,
-      opacity: 0.25,
-      ease: 'none',
-      scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: 0.4 },
-    });
-  }
-}
-
-/* ==========================================================================
-   VISION セクション：ピン留め＋文字のスクラブ点灯
-   ========================================================================== */
-function initVision() {
-  const pin = document.querySelector<HTMLElement>('.vision-pin');
-  if (!pin) return;
-
-  const lines = pin.querySelectorAll<HTMLElement>('[data-scrub-text]');
-  const allChars: HTMLElement[] = [];
-  lines.forEach((line) => allChars.push(...splitText(line)));
-  if (allChars.length === 0) return;
-
-  if (reducedMotion) {
-    allChars.forEach((c) => (c.style.opacity = '1'));
-    return;
-  }
-
-  gsap.to(allChars, {
-    opacity: 1,
-    ease: 'none',
-    stagger: 0.06,
-    scrollTrigger: {
-      trigger: pin,
-      start: 'top top',
-      end: '+=140%',
-      pin: true,
-      scrub: 0.4,
-      anticipatePin: 1,
-    },
+function initFilms() {
+  document.querySelectorAll<HTMLButtonElement>('[data-film]').forEach((btn) => {
+    btn.addEventListener(
+      'click',
+      () => {
+        const id = btn.dataset.film!;
+        const iframe = document.createElement('iframe');
+        iframe.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&playsinline=1`;
+        iframe.title = btn.getAttribute('aria-label') || 'Film';
+        iframe.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+        iframe.allowFullscreen = true;
+        btn.parentElement!.classList.add('is-playing');
+        btn.replaceWith(iframe);
+      },
+      { once: true }
+    );
   });
 }
 
 /* ==========================================================================
-   ライフサイクル（Astro ClientRouter 対応）
+   ページのライフサイクル
    ========================================================================== */
-const cleanups: Array<() => void> = [];
-
 function initPage() {
-  initChrome();
+  card?.scan();
+  initFit();
+  initReveals();
   initHero();
-  initVision();
-  initScrollAnimations();
-  initTilt();
-  initParticles();
-  initCursor();
-  ScrollTrigger.refresh();
+  initWorks();
+  initFilms();
+  lenis?.resize();
+  if (card) root.classList.add('gl-ready');
 }
 
 function destroyPage() {
-  cleanups.forEach((fn) => fn());
-  cleanups.length = 0;
-  destroyParticles();
-  destroyCursor();
-  ScrollTrigger.getAll().forEach((st) => st.kill());
+  io?.disconnect();
+  io = null;
+  worksCleanup?.();
+  worksCleanup = null;
+  fitCleanup?.();
+  fitCleanup = null;
 }
 
 document.addEventListener('astro:page-load', initPage);
 document.addEventListener('astro:before-swap', destroyPage);
+
+// 遷移前に紙面をそっと下げる（カードは残って次のページへ移動する）
+document.addEventListener('astro:before-preparation', (ev) => {
+  const main = document.querySelector('main');
+  if (!main || reducedMotion) return;
+  const original = ev.loader;
+  ev.loader = async () => {
+    lenis?.stop();
+    await Promise.all([
+      original(),
+      gsap.to(main, { opacity: 0, y: -24, duration: 0.55, ease: 'power2.in' }),
+    ]);
+  };
+});
+
+document.addEventListener('astro:after-swap', () => {
+  lenis?.start();
+  lenis?.resize();
+  // Astro がスクロール位置（先頭 or 履歴の位置）を復元した後なので、Lenis をそこへ同期する
+  lenis?.scrollTo(window.scrollY, { immediate: true, force: true });
+});

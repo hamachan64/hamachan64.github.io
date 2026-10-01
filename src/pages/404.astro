@@ -1,0 +1,63 @@
+---
+import Base from '../layouts/Base.astro';
+import Lines from '../components/Lines.astro';
+---
+
+<Base title="404 — Yuki Hamaguchi">
+  <main id="top" class="nf wrap grid">
+    <div class="nf-text">
+      <p class="label" data-fade data-manual>Error 404</p>
+      <Lines as="h1" class="nf-title display" lines={['This card', 'does not exist.']} manual delay={100} />
+      <p class="jp nf-lead" data-fade data-manual style="--d: 400ms">
+        お探しのページは見つかりませんでした。カードはまだ刷られていないようです。
+      </p>
+      <a class="label label-ink ul" href="/" data-fade data-manual style="--d: 500ms">← Back to index</a>
+    </div>
+    <div class="nf-card-col">
+      <div class="nf-card card-anchor" data-card data-face="back" style="aspect-ratio: 63 / 88" aria-hidden="true"></div>
+    </div>
+  </main>
+</Base>
+
+<style>
+  .nf {
+    min-height: 100svh;
+    padding-top: var(--header-h);
+    align-items: center;
+  }
+
+  .nf-text {
+    grid-column: 1 / span 7;
+    display: grid;
+    gap: 28px;
+    justify-items: start;
+  }
+
+  .nf-title {
+    font-size: clamp(56px, 9vw, 160px);
+  }
+
+  .nf-card-col {
+    grid-column: 9 / span 3;
+  }
+
+  .nf-card {
+    width: 100%;
+    max-width: 280px;
+    margin-inline: auto;
+  }
+
+  @media (max-width: 760px) {
+    .nf-text,
+    .nf-card-col {
+      grid-column: 1 / -1;
+    }
+
+    .nf-card-col {
+      grid-row: 1;
+      width: 44vw;
+      justify-self: center;
+      margin-top: 32px;
+    }
+  }
+</style>
