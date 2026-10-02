@@ -11,9 +11,11 @@ const works = (await getCollection('works')).sort((a, b) => a.data.order - b.dat
 const released = works.filter((w) => !w.data.comingSoon);
 const pad = (n: number) => String(n).padStart(2, '0');
 
-const rows = await Promise.all(
-  works.map(async (w) => {
-    const img = w.data.card ?? w.data.cover;
+// 公開済みの作品：1件ずつ画像を大きく見せる
+const items = await Promise.all(
+  released.map(async (w) => {
+    const img = (w.data.card ?? w.data.cover)!;
+    const [fx, fy] = w.data.cardFocus.split(/\s+/);
     return {
       id: w.id,
       no: pad(w.data.order),
@@ -21,16 +23,19 @@ const rows = await Promise.all(
       subtitle: w.data.subtitle,
       tech: w.data.tech,
       year: w.data.year,
-      comingSoon: w.data.comingSoon,
-      cover: w.data.cover,
       focus: w.data.cardFocus,
-      src: img && !w.data.comingSoon ? await previewSrc(img) : undefined,
+      position: `${Number(fx) * 100}% ${Number(fy) * 100}%`,
+      src: await previewSrc(img),
     };
   })
 );
-// 未発表の枠
-const slots = [rows.length + 1, rows.length + 2].map(pad);
-const first = rows.find((r) => r.src)!;
+// 制作中の作品と、未発表の枠（画像は出さず、一覧の最後に小さく添える）
+const upcoming = [
+  ...works
+    .filter((w) => w.data.comingSoon)
+    .map((w) => ({ no: pad(w.data.order), title: w.data.title, note: w.data.subtitle })),
+  ...[works.length + 1, works.length + 2].map((n) => ({ no: pad(n), title: 'Coming soon', note: '' })),
+];
 
 // Hero：PC は横長、モバイルは縦長。どちらも本人と鏡像が向かい合う構図
 const wide = await getImage({ src: portraitWide, widths: [720, 1024], format: 'webp', quality: 86 });
@@ -166,75 +171,49 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
         <span class="label num">2025—2026 · {pad(released.length)} projects</span>
       </header>
 
-      <div class="grid works-body">
-        <ol class="works-list" data-works>
-          {
-            rows.map((r) =>
-              r.comingSoon ? (
-                <li class="row is-soon" data-row data-caption={`${r.no} — In development`}>
-                  <span class="row-no label num">{r.no}</span>
-                  <span class="row-main">
-                    <span class="row-title">{r.title}</span>
-                    <span class="row-sub label">{r.subtitle}</span>
-                  </span>
-                  <span class="row-tech label">In development</span>
-                  <span class="row-year label">—</span>
-                </li>
-              ) : (
-                <li>
-                  <a
-                    class="row"
-                    href={`/${r.id}`}
-                    data-row
-                    data-preview={r.src}
-                    data-focus={r.focus}
-                    data-caption={`${r.no} — ${r.subtitle}`}
-                  >
-                    {r.cover && (
-                      <span class="row-thumb" data-clip>
-                        <Image src={r.cover} alt="" width={720} loading="lazy" />
+      <ol class="grid works-grid">
+        {
+          items.map((w, i) => (
+            <li class:list={['work', `slot-${i % 6}`]}>
+              <a class="work-link" href={`/${w.id}`}>
+                <figure class="work-img glass" data-glass="lazy" data-src={w.src} data-focus={w.focus} data-clip>
+                  <img src={w.src} alt="" loading={i < 2 ? 'eager' : 'lazy'} style={`object-position:${w.position}`} />
+                </figure>
+                <span class="work-meta">
+                  <span class="work-no label num">{w.no}</span>
+                  <span class="work-main">
+                    <span class="work-title">
+                      {w.title}
+                      <span class="work-arrow" aria-hidden="true">
+                        →
                       </span>
-                    )}
-                    <span class="row-no label num">{r.no}</span>
-                    <span class="row-main">
-                      <span class="row-title">
-                        {r.title}
-                        <span class="row-arrow" aria-hidden="true">
-                          →
-                        </span>
-                      </span>
-                      <span class="row-sub label">{r.subtitle}</span>
                     </span>
-                    <span class="row-tech label">{r.tech}</span>
-                    <span class="row-year label num">{r.year}</span>
-                  </a>
-                </li>
-              )
-            )
-          }
-          {
-            slots.map((n) => (
-              <li class="row is-soon is-slot" data-row data-caption={`${n} — Coming soon`}>
-                <span class="row-no label num">{n}</span>
-                <span class="row-main">
-                  <span class="row-title label">Coming soon</span>
+                    <span class="label">{w.subtitle}</span>
+                  </span>
+                  <span class="work-side label">
+                    <span class="num">{w.year}</span>
+                    <span>{w.tech}</span>
+                  </span>
                 </span>
-                <span class="row-tech label" />
-                <span class="row-year label">—</span>
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+
+      <div class="upcoming">
+        <h3 class="label label-ink">In the works</h3>
+        <ol>
+          {
+            upcoming.map((u) => (
+              <li class="label">
+                <span class="num">{u.no}</span>
+                <span class="upcoming-title">{u.title}</span>
+                <span>{u.note || '—'}</span>
               </li>
             ))
           }
         </ol>
-
-        <div class="works-preview-col" aria-hidden="true">
-          <div class="works-preview-sticky">
-            <figure class="works-preview glass" data-glass data-works-preview data-src={first.src} data-focus={first.focus}>
-              <img src={first.src} alt="" loading="lazy" />
-              <span class="works-preview-empty label">In development</span>
-            </figure>
-            <p class="works-preview-cap label num" data-preview-cap>{first.no} — {rows[0].subtitle}</p>
-          </div>
-        </div>
       </div>
     </section>
 
@@ -493,132 +472,123 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
     padding-block: clamp(140px, 22vh, 240px) clamp(120px, 20vh, 200px);
   }
 
-  .works-body {
+  /* 2件ずつ、大小と上下をずらして組む（6件で一巡） */
+  .works-grid {
+    row-gap: clamp(72px, 13vh, 160px);
     align-items: start;
   }
 
-  .works-list {
-    grid-column: 1 / span 7;
-    border-bottom: 1px solid var(--line);
+  .work-link {
+    display: block;
   }
 
-  .row {
-    position: relative;
+  .work-img {
+    margin: 0;
+    background: var(--paper-2);
+  }
+
+  .slot-0 { grid-column: 1 / span 5; }
+  .slot-0 .work-img { aspect-ratio: 4 / 5; }
+
+  .slot-1 { grid-column: 7 / span 6; margin-top: clamp(80px, 22vh, 260px); }
+  .slot-1 .work-img { aspect-ratio: 4 / 3; }
+
+  .slot-2 { grid-column: 1 / span 7; }
+  .slot-2 .work-img { aspect-ratio: 16 / 9; }
+
+  .slot-3 { grid-column: 9 / span 4; margin-top: clamp(60px, 16vh, 200px); }
+  .slot-3 .work-img { aspect-ratio: 4 / 5; }
+
+  .slot-4 { grid-column: 2 / span 5; }
+  .slot-4 .work-img { aspect-ratio: 4 / 3; }
+
+  .slot-5 { grid-column: 8 / span 5; margin-top: clamp(80px, 20vh, 240px); }
+  .slot-5 .work-img { aspect-ratio: 16 / 10; }
+
+  .work-meta {
     display: grid;
-    grid-template-columns: 3em minmax(0, 1fr) 14em 3.4em;
+    grid-template-columns: 2.4em minmax(0, 1fr) auto;
     align-items: baseline;
-    column-gap: var(--gutter);
-    padding-block: 26px 28px;
-    border-top: 1px solid var(--line);
-    transition: opacity 0.5s var(--ease-out);
+    column-gap: 12px;
+    padding-top: 16px;
   }
 
-  li:first-child > .row {
-    border-top: 0;
+  .work-no {
+    color: var(--ink);
   }
 
-  .row-thumb {
-    display: none;
-  }
-
-  .row-main {
+  .work-main {
     display: grid;
     gap: 4px;
   }
 
-  .row-title {
-    font-family: var(--f-sans);
-    font-size: clamp(20px, 1.9vw, 28px);
+  .work-title {
+    word-break: auto-phrase;
+    text-wrap: balance;
+    font-size: clamp(19px, 1.7vw, 26px);
     font-weight: 500;
     line-height: 1.3;
     letter-spacing: -0.005em;
     display: inline-flex;
     align-items: baseline;
     gap: 0.4em;
-    transition: transform 0.7s var(--ease-out);
   }
 
-  .row-arrow {
+  .work-arrow {
     font-weight: 400;
     opacity: 0;
-    transform: translateX(-0.6em);
+    transform: translateX(-0.5em);
     transition:
       opacity 0.4s ease,
       transform 0.7s var(--ease-out);
   }
 
-  .row-no,
-  .row-year {
+  .work-side {
+    display: grid;
+    justify-items: end;
+    text-align: right;
+    gap: 4px;
+  }
+
+  .work-side .num {
     color: var(--ink);
   }
 
-  .row-year {
-    text-align: right;
-  }
-
-  .is-soon,
-  .is-soon .row-no,
-  .is-soon .row-year {
-    color: var(--mute);
-  }
-
-  .is-slot {
-    padding-block: 14px 16px;
-  }
-
-  .is-slot .row-title {
-    font-size: 12px;
-    font-weight: 450;
+  /* 画像はガラス側（WebGL）が揺らぐので、CSS ではごく僅かに寄るだけ */
+  .work-img > img {
+    transition: transform 1.2s var(--ease-out);
   }
 
   @media (hover: hover) {
-    .works-list.is-hovering .row:not(.is-active) {
-      opacity: 0.3;
-    }
-
-    a.row.is-active .row-title {
-      transform: translateX(12px);
-    }
-
-    a.row.is-active .row-arrow {
+    .work-link:hover .work-arrow {
       opacity: 1;
       transform: none;
     }
+
+    .work-link:hover .work-img:not(.is-gl) > img {
+      transform: scale(1.03);
+    }
   }
 
-  .works-preview-col {
-    grid-column: 9 / -1;
-    height: 100%;
+  .upcoming {
+    margin-top: clamp(100px, 16vh, 180px);
   }
 
-  .works-preview-sticky {
-    position: sticky;
-    top: calc(var(--header-h) + 24px);
+  .upcoming h3 {
+    font-weight: 500;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--line-strong);
   }
 
-  .works-preview {
-    margin: 0;
-    aspect-ratio: 4 / 5;
-    max-height: calc(100svh - var(--header-h) - 96px);
-    background: var(--paper-2);
-  }
-
-  .works-preview-empty {
-    position: absolute;
-    inset: 0;
+  .upcoming li {
     display: grid;
-    place-items: center;
-    opacity: 0;
-    transition: opacity 0.6s ease;
+    grid-template-columns: 2.4em minmax(0, 1fr) auto;
+    column-gap: 12px;
+    padding-block: 10px;
+    border-bottom: 1px solid var(--line);
   }
 
-  .works-preview.is-empty .works-preview-empty {
-    opacity: 1;
-    transition-delay: 0.5s;
-  }
-
-  .works-preview-cap {
-    margin-top: 12px;
+  .upcoming-title {
     color: var(--ink);
   }
 
@@ -671,11 +641,7 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
 
   /* ============================== Tablet ============================== */
   @media (max-width: 1100px) {
-    .row {
-      grid-template-columns: 2.6em minmax(0, 1fr) 3.4em;
-    }
-
-    .row-tech {
+    .work-side > span:last-child {
       display: none;
     }
 
@@ -750,32 +716,18 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
       margin-top: 40px;
     }
 
-    .works-list {
+    .work {
       grid-column: 1 / -1;
+      margin-top: 0;
     }
 
-    .works-preview-col {
-      display: none;
+    /* 縦長の1枚だけ内側に入れて、リズムを残す */
+    .slot-3 {
+      grid-column: 2 / span 3;
     }
 
-    .row {
-      grid-template-columns: 2.4em minmax(0, 1fr) auto;
-      padding-block: 18px 26px;
-    }
-
-    .row-thumb {
-      display: block;
-      grid-column: 1 / -1;
-      aspect-ratio: 16 / 10;
-      overflow: hidden;
-      margin-bottom: 18px;
-      background: var(--paper-2);
-    }
-
-    .row-thumb :global(img) {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+    .works-grid {
+      row-gap: 64px;
     }
 
     .contact-side {

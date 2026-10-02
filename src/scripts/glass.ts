@@ -138,6 +138,8 @@ export interface GlassOptions {
   focus?: [number, number];
   seam?: number;
   getVelocity?: () => number;
+  /** false：登場の演出は外側（CSS）に任せ、最初から結像した状態で描く */
+  intro?: boolean;
   reducedMotion?: boolean;
 }
 
@@ -230,6 +232,11 @@ export class Glass {
     });
     this.mesh = new Mesh(gl, { geometry: new Triangle(gl), program: this.program });
     this.blankTex = { tex: blank, aspect: 1 };
+    if (opts.intro === false) {
+      this.revealed = true;
+      this.s.reveal = 1;
+      this.s.virtual = 1;
+    }
 
     this.ro = new ResizeObserver(() => this.resize());
     this.ro.observe(host);

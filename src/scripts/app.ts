@@ -37,32 +37,65 @@ document.addEventListener('click', (e) => {
 const cleanups: Array<() => void> = [];
 
 /* ==========================================================================
-   Glass：[data-glass] の画像を WebGL で描く（細かいポインタ操作ができる環境のみ）
+   Glass：[data-glass] の画像を WebGL で描く
+   - data-glass         : ページを開いた時点で生成（Hero・作品ページのビジュアル）
+   - data-glass="lazy"  : 画面に近づいたときだけ生成し、離れたら破棄する（Works の一覧）
+     WebGL のコンテキストはブラウザごとに同時に持てる数が限られているため。
    ========================================================================== */
-const glasses = new WeakMap<HTMLElement, Glass>();
+function createGlass(el: HTMLElement, intro: boolean): Glass | null {
+  const focus = (el.dataset.focus || '0.5 0.5').split(/\s+/).map(Number) as [number, number];
+  // 縦長の差し替え画像があれば、モバイルではそちらを使う（<picture> と同じ切り替え）
+  const tall = !!el.dataset.srcTall && window.matchMedia('(max-width: 760px)').matches;
+  const seam = tall ? el.dataset.seamTall : el.dataset.seam;
+  try {
+    return new Glass(el, {
+      src: tall ? el.dataset.srcTall! : el.dataset.src!,
+      focus,
+      seam: seam ? Number(seam) : undefined,
+      getVelocity: () => lenis?.velocity ?? 0,
+      intro,
+    });
+  } catch (err) {
+    console.warn('[glass] disabled:', err);
+    return null;
+  }
+}
 
 function initGlass() {
   if (!useGlass) return;
-  document.querySelectorAll<HTMLElement>('[data-glass]').forEach((el) => {
+
+  document.querySelectorAll<HTMLElement>('[data-glass]:not([data-glass="lazy"])').forEach((el) => {
     // 登場の演出は WebGL 側で行うので、CSS のクリップは外す
     el.removeAttribute('data-clip');
     el.removeAttribute('data-manual');
-    const focus = (el.dataset.focus || '0.5 0.5').split(/\s+/).map(Number) as [number, number];
-    // 縦長の差し替え画像があれば、モバイルではそちらを使う（<picture> と同じ切り替え）
-    const tall = !!el.dataset.srcTall && window.matchMedia('(max-width: 760px)').matches;
-    const seam = tall ? el.dataset.seamTall : el.dataset.seam;
-    try {
-      const g = new Glass(el, {
-        src: tall ? el.dataset.srcTall! : el.dataset.src!,
-        focus,
-        seam: seam ? Number(seam) : undefined,
-        getVelocity: () => lenis?.velocity ?? 0,
+    const g = createGlass(el, true);
+    if (g) cleanups.push(() => g.destroy());
+  });
+
+  const lazy = document.querySelectorAll<HTMLElement>('[data-glass="lazy"]');
+  if (lazy.length === 0) return;
+  const live = new Map<HTMLElement, Glass>();
+  const io = new IntersectionObserver(
+    (entries) => {
+      entries.forEach(({ target, isIntersecting }) => {
+        const el = target as HTMLElement;
+        if (isIntersecting && !live.has(el)) {
+          // 登場は CSS のクリップで見せ、ガラスは結像済みの状態から描く
+          const g = createGlass(el, false);
+          if (g) live.set(el, g);
+        } else if (!isIntersecting && live.has(el)) {
+          live.get(el)!.destroy();
+          live.delete(el);
+        }
       });
-      glasses.set(el, g);
-      cleanups.push(() => g.destroy());
-    } catch (err) {
-      console.warn('[glass] disabled:', err);
-    }
+    },
+    { rootMargin: '40% 0px' }
+  );
+  lazy.forEach((el) => io.observe(el));
+  cleanups.push(() => {
+    io.disconnect();
+    live.forEach((g) => g.destroy());
+    live.clear();
   });
 }
 
@@ -144,72 +177,6 @@ function initFit() {
 }
 
 /* ==========================================================================
-   Works：行ホバー / スクロール位置でプレビューを切り替える
-   ========================================================================== */
-function initWorks() {
-  const list = document.querySelector<HTMLElement>('[data-works]');
-  const preview = document.querySelector<HTMLElement>('[data-works-preview]');
-  const cap = document.querySelector<HTMLElement>('[data-preview-cap]');
-  if (!list || !preview) return;
-  const rows = Array.from(list.querySelectorAll<HTMLElement>('[data-row]'));
-  const fallbackImg = preview.querySelector('img');
-  const glass = glasses.get(preview);
-  glass?.preload(rows.map((r) => r.dataset.preview).filter(Boolean) as string[]);
-  let hovering = false;
-  let current: HTMLElement | null = null;
-
-  const activate = (row: HTMLElement) => {
-    if (row === current) return;
-    current = row;
-    rows.forEach((r) => r.classList.toggle('is-active', r === row));
-    if (cap) cap.textContent = row.dataset.caption ?? '';
-    const src = row.dataset.preview;
-    preview.classList.toggle('is-empty', !src);
-    const focus = (row.dataset.focus || '0.5 0.5').split(/\s+/).map(Number) as [number, number];
-    if (glass) glass.show(src ?? 'blank', focus);
-    else if (fallbackImg && src) fallbackImg.src = src;
-  };
-
-  const onEnter = (e: Event) => {
-    hovering = true;
-    list.classList.add('is-hovering');
-    activate(e.currentTarget as HTMLElement);
-  };
-  const onLeave = () => {
-    hovering = false;
-    list.classList.remove('is-hovering');
-  };
-  rows.forEach((r) => {
-    r.addEventListener('pointerenter', onEnter);
-    r.addEventListener('focus', onEnter);
-  });
-  list.addEventListener('pointerleave', onLeave);
-
-  // ホバーしていない間は、画面中央に最も近い行をアクティブに
-  const onScroll = () => {
-    if (hovering) return;
-    const mid = window.innerHeight * 0.45;
-    let best = rows[0];
-    let bestD = Infinity;
-    for (const r of rows) {
-      const b = r.getBoundingClientRect();
-      const d = Math.abs(b.top + b.height / 2 - mid);
-      if (d < bestD) {
-        bestD = d;
-        best = r;
-      }
-    }
-    activate(best);
-  };
-  onScroll();
-  window.addEventListener('scroll', onScroll, { passive: true });
-  cleanups.push(() => {
-    window.removeEventListener('scroll', onScroll);
-    list.removeEventListener('pointerleave', onLeave);
-  });
-}
-
-/* ==========================================================================
    Film：クリックまで YouTube を読み込まない
    ========================================================================== */
 function initFilms() {
@@ -238,7 +205,6 @@ document.addEventListener('astro:page-load', () => {
   initFit();
   initReveals();
   initIntro();
-  initWorks();
   initFilms();
   lenis?.resize();
 });
