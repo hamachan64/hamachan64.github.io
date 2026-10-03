@@ -13,6 +13,8 @@ const works = defineCollection({
       tech: z.string().optional(),
       year: z.string().optional(),
       cover: image().optional(),
+      card: image().optional(), // 一覧と作品ページのビジュアルに使う画像。未指定なら cover
+      cardFocus: z.string().default('0.5 0.5'), // トリミングの焦点 "x y"（0〜1）
       gallery: z.array(image()).default([]),
       youtube: z.string().optional(), // YouTube 動画ID
       youtubeAspect: z.enum(['vertical', 'wide']).default('vertical'),

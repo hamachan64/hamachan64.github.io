@@ -1,0 +1,27 @@
+---
+/**
+ * 行単位でマスクして持ち上げるテキスト。
+ * lines の各要素が1行（HTML 可）。delay は ms。
+ */
+interface Props {
+  as?: string;
+  lines: string[];
+  class?: string;
+  delay?: number;
+  manual?: boolean;
+  [key: string]: unknown;
+}
+
+const { as: Tag = 'p', lines, class: cls, delay = 0, manual = false, ...rest } = Astro.props;
+const label = lines.map((l) => l.replace(/<[^>]+>/g, '')).join(' ');
+---
+
+<Tag class={cls} data-lines data-manual={manual ? '' : undefined} style={`--d:${delay}ms`} aria-label={label} {...rest}>
+  {
+    lines.map((line, i) => (
+      <span class="line" style={`--i:${i}`} aria-hidden="true">
+        <span class="line-in" set:html={line} />
+      </span>
+    ))
+  }
+</Tag>

@@ -1,0 +1,59 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="404 — Yuki Hamaguchi">
+  <main id="top" class="nf wrap">
+    <p class="nf-code display" aria-label="404">
+      <span>404</span><span class="nf-mirror" aria-hidden="true">404</span>
+    </p>
+    <div class="nf-text">
+      <h1 class="jp nf-lead">お探しのページは、鏡の向こう側にも見つかりませんでした。</h1>
+      <p class="label">This page doesn’t exist — on either side of the mirror.</p>
+      <a class="label label-ink ul" href="/">Back to index</a>
+    </div>
+  </main>
+</Base>
+
+<style>
+  .nf {
+    min-height: 100svh;
+    padding-top: var(--header-h);
+    display: grid;
+    align-content: center;
+    gap: 40px;
+  }
+
+  .nf-code {
+    display: flex;
+    font-size: clamp(120px, 26vw, 420px);
+    border-bottom: 1px solid var(--line-strong);
+  }
+
+  .nf-code span {
+    flex: 1;
+    text-align: right;
+    padding-right: 0.06em;
+  }
+
+  /* 継ぎ目を挟んだ鏡像（反転するので、右寄せ＋右罫線が継ぎ目側に来る） */
+  .nf-mirror {
+    transform: scaleX(-1);
+    color: transparent;
+    -webkit-text-stroke: 1px var(--ink);
+    border-right: 1px solid var(--line-strong);
+  }
+
+  .nf-text {
+    display: grid;
+    gap: 14px;
+    justify-items: start;
+    max-width: 36em;
+  }
+
+  .nf-lead {
+    font-size: clamp(18px, 1.8vw, 24px);
+    font-weight: 500;
+    line-height: 1.6;
+  }
+</style>

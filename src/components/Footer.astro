@@ -1,52 +1,59 @@
 ---
 const year = new Date().getFullYear();
+const social = [
+  { href: 'https://x.com/hamaXR64', label: 'X' },
+  { href: 'https://www.youtube.com/@Hamachan64', label: 'YouTube' },
+  { href: 'https://github.com/hamachan64', label: 'GitHub' },
+];
 ---
 
-<footer class="footer">
-  <div class="container footer-inner">
-    <p class="copy font-head">&copy; {year} Yuki Hamaguchi — XR Creator Portfolio</p>
-    <div class="links">
-      <a href="https://x.com/hamaXR64" target="_blank" rel="noopener noreferrer">X</a>
-      <a href="https://www.youtube.com/@Hamachan64" target="_blank" rel="noopener noreferrer">YouTube</a>
-      <a href="https://github.com/hamachan64" target="_blank" rel="noopener noreferrer">GitHub</a>
-    </div>
-  </div>
+<footer class="footer wrap">
+  <p class="label">&copy; {year} Yuki Hamaguchi</p>
+  <ul>
+    {
+      social.map((s) => (
+        <li>
+          <a class="label label-ink" href={s.href} target="_blank" rel="noopener noreferrer">
+            {s.label} ↗
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+  <a class="label label-ink totop" href="#top">Back to top ↑</a>
 </footer>
 
 <style>
   .footer {
-    border-top: 1px solid var(--line);
-    padding-block: 32px;
-  }
-
-  .footer-inner {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
-    gap: 16px;
-    flex-wrap: wrap;
+    gap: var(--gutter);
+    padding-block: 22px 26px;
+    border-top: 1px solid var(--line);
   }
 
-  .copy {
-    font-size: 0.75rem;
-    letter-spacing: 0.12em;
-    color: var(--text-faint);
-  }
-
-  .links {
+  ul {
     display: flex;
-    gap: 24px;
+    gap: 22px;
   }
 
-  .links a {
-    font-family: var(--font-head);
-    font-size: 0.75rem;
-    letter-spacing: 0.18em;
-    color: var(--text-dim);
-    transition: color var(--dur-fast) ease;
+  .totop {
+    justify-self: end;
   }
 
-  .links a:hover {
-    color: var(--holo-1);
+  a:hover {
+    color: var(--mute);
+  }
+
+  @media (max-width: 760px) {
+    .footer {
+      grid-template-columns: 1fr auto;
+    }
+
+    ul {
+      grid-column: 1 / -1;
+      grid-row: 1;
+    }
   }
 </style>

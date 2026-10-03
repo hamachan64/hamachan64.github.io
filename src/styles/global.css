@@ -1,44 +1,38 @@
 /* ==========================================================================
-   Design Tokens — "Spatial Deck" holographic theme
+   Fonts（セルフホスト）
+   - Archivo: 欧文ディスプレイ／本文（wdth 軸で名前を長体に）
+   - Zen Kaku Gothic New: 和文本文 / Zen Old Mincho: 和文ステートメント
+   ========================================================================== */
+@import '@fontsource-variable/archivo/wdth.css';
+@import '@fontsource/zen-kaku-gothic-new/400.css';
+@import '@fontsource/zen-kaku-gothic-new/500.css';
+@import '@fontsource/zen-kaku-gothic-new/700.css';
+@import '@fontsource/zen-old-mincho/500.css';
+@import '@fontsource/zen-old-mincho/700.css';
+
+/* ==========================================================================
+   Tokens
+   紙とモノクロ写真（現実）が基調。色は、鏡像（仮想）に触れたときの光の干渉にだけ現れる。
    ========================================================================== */
 :root {
-  /* Color */
-  --bg: #07070d;
-  --bg-2: #0c0c17;
-  --surface: rgba(255, 255, 255, 0.04);
-  --surface-2: rgba(255, 255, 255, 0.07);
-  --line: rgba(255, 255, 255, 0.1);
-  --text: #eaeaf2;
-  --text-dim: #9c9cb4;
-  --text-faint: #62627a;
+  --paper: #ebe9e4;
+  --paper-2: #e2e0da;
+  --ink: #121211;
+  --ink-2: #3b3a37;
+  --mute: #75736e;
+  --line: rgba(18, 18, 17, 0.14);
+  --line-strong: rgba(18, 18, 17, 0.9);
 
-  /* Holographic spectrum */
-  --holo-1: #6ee7ff; /* cyan   */
-  --holo-2: #a78bfa; /* violet */
-  --holo-3: #ff8bd8; /* pink   */
-  --holo-4: #7dffc4; /* mint   */
-  --grad-holo: linear-gradient(
-    115deg,
-    var(--holo-1) 0%,
-    var(--holo-2) 34%,
-    var(--holo-3) 62%,
-    var(--holo-4) 100%
-  );
+  --f-sans: 'Archivo Variable', 'Zen Kaku Gothic New', system-ui, sans-serif;
+  --f-jp: 'Zen Kaku Gothic New', 'Archivo Variable', sans-serif;
+  --f-min: 'Zen Old Mincho', serif;
 
-  /* Typography */
-  --font-head: 'Space Grotesk', 'Zen Kaku Gothic New', sans-serif;
-  --font-body: 'Zen Kaku Gothic New', sans-serif;
+  --margin: clamp(16px, 2.8vw, 40px);
+  --gutter: clamp(12px, 1.6vw, 24px);
+  --header-h: 64px;
 
-  /* Motion */
-  --ease-out: cubic-bezier(0.19, 1, 0.22, 1);
-  --dur-fast: 0.25s;
-  --dur: 0.6s;
-
-  /* Layout */
-  --header-h: 72px;
-  --container: 1160px;
-  --radius: 16px;
-  --radius-lg: 24px;
+  --ease: cubic-bezier(0.7, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* ==========================================================================
@@ -53,23 +47,36 @@
 }
 
 html {
-  scroll-behavior: auto; /* Lenis が制御 */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
 }
 
 body {
-  background-color: var(--bg);
-  color: var(--text);
-  font-family: var(--font-body);
-  font-weight: 400;
-  line-height: 1.8;
-  overflow-x: hidden;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--f-sans);
+  font-size: 15px;
+  line-height: 1.75;
+  font-feature-settings: 'palt' 0;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: clip;
 }
 
 img,
-video {
-  max-width: 100%;
+video,
+canvas {
   display: block;
+  max-width: 100%;
 }
 
 a {
@@ -85,231 +92,247 @@ button {
   cursor: pointer;
 }
 
+ul,
+ol {
+  list-style: none;
+}
+
 ::selection {
-  background: var(--holo-2);
-  color: #0a0a12;
+  background: var(--ink);
+  color: var(--paper);
 }
 
-/* ==========================================================================
-   Background ambience — 深い空間色のグラデーション＋ノイズ
-   ========================================================================== */
-.bg-ambient {
-  position: fixed;
-  inset: 0;
-  z-index: -2;
-  background:
-    radial-gradient(60% 50% at 15% 10%, rgba(110, 231, 255, 0.07), transparent 60%),
-    radial-gradient(50% 45% at 85% 25%, rgba(167, 139, 250, 0.08), transparent 60%),
-    radial-gradient(55% 55% at 50% 95%, rgba(255, 139, 216, 0.05), transparent 60%),
-    linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+:focus-visible {
+  outline: 1.5px solid var(--ink);
+  outline-offset: 3px;
 }
 
-.bg-noise {
+/* 紙の繊維感（静的・ごく弱く） */
+.paper-grain {
   position: fixed;
   inset: 0;
   z-index: 100;
   pointer-events: none;
-  opacity: 0.05;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.32;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.48 0 0 0 0 0.45 0 0 0 0.22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 /* ==========================================================================
-   Typography helpers
+   Layout
    ========================================================================== */
-.font-head {
-  font-family: var(--font-head);
+.wrap {
+  padding-inline: var(--margin);
 }
 
-.text-holo {
-  background: var(--grad-holo);
-  background-size: 200% 200%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--gutter);
 }
 
-.kicker {
-  font-family: var(--font-head);
-  font-size: 0.78rem;
-  font-weight: 500;
-  letter-spacing: 0.35em;
+@media (max-width: 760px) {
+  .grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.rule {
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+
+/* ==========================================================================
+   Type
+   ========================================================================== */
+.label {
+  font-family: var(--f-sans);
+  font-size: 12px;
+  font-weight: 450;
+  line-height: 1.5;
+  letter-spacing: 0.005em;
+  font-variant-numeric: tabular-nums;
+  color: var(--mute);
+}
+
+.label-ink {
+  color: var(--ink);
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+.display {
+  font-family: var(--f-sans);
+  font-weight: 640;
+  font-stretch: 68%;
+  line-height: 0.86;
+  letter-spacing: -0.02em;
   text-transform: uppercase;
-  color: var(--text-dim);
 }
 
-/* ==========================================================================
-   Layout helpers
-   ========================================================================== */
-.container {
-  max-width: var(--container);
-  margin-inline: auto;
-  padding-inline: clamp(20px, 4vw, 48px);
+.statement,
+.jp {
+  word-break: auto-phrase;
+  text-wrap: pretty;
 }
 
-.section {
-  padding-block: clamp(96px, 14vh, 160px);
-  position: relative;
-}
-
-/* ==========================================================================
-   Buttons
-   ========================================================================== */
-.btn-holo {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6em;
-  padding: 0.9em 2.2em;
-  font-family: var(--font-head);
+.statement {
+  font-family: var(--f-min);
   font-weight: 500;
-  letter-spacing: 0.12em;
-  font-size: 0.9rem;
-  color: var(--text);
-  border-radius: 999px;
-  background: var(--surface);
-  isolation: isolate;
-  overflow: hidden;
-  transition: color var(--dur-fast) ease;
+  font-size: clamp(26px, 3.4vw, 54px);
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+  font-feature-settings: 'palt' 1;
 }
 
-.btn-holo::before {
-  /* ホログラフィックの縁取り */
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: var(--grad-holo);
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
+.jp {
+  font-family: var(--f-jp);
+  font-feature-settings: 'palt' 1;
+  letter-spacing: 0.04em;
 }
 
-.btn-holo::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  background: var(--grad-holo);
-  opacity: 0;
-  transition: opacity var(--dur-fast) ease;
+.en-note {
+  font-family: var(--f-sans);
+  font-stretch: 100%;
+  color: var(--ink-2);
+  font-size: 14px;
+  line-height: 1.7;
 }
 
-.btn-holo:hover {
-  color: #0a0a12;
+/* 下線が引かれるリンク */
+.ul {
+  background: linear-gradient(currentColor, currentColor) 0 100% / 100% 1px no-repeat;
+  transition: background-size 0.6s var(--ease-out);
 }
 
-.btn-holo:hover::after {
-  opacity: 1;
+.ul:hover {
+  background-size: 0% 1px;
+  background-position: 100% 100%;
 }
 
 /* ==========================================================================
-   Animation primitives（JSが .is-inview を付与）
+   Motion primitives
    ========================================================================== */
-/* JSが有効なときだけ初期非表示にする（html.js はスクリプトが付与） */
-html.js [data-reveal] {
+/* 行マスク：[data-lines] の子 span を1行ずつ持ち上げる */
+[data-lines] > .line {
+  display: block;
+  overflow: clip;
+  overflow-clip-margin: 0.12em;
+  padding-bottom: 0.04em;
+}
+
+[data-lines] > .line > .line-in {
+  display: block;
+}
+
+html.js [data-lines]:not(.is-in) > .line > .line-in {
+  transform: translateY(105%);
+}
+
+[data-lines] > .line > .line-in {
+  transition: transform 1.2s var(--ease-out);
+  transition-delay: calc(var(--i, 0) * 80ms + var(--d, 0ms));
+}
+
+/* 文字単位（Hero の名前など） */
+[data-lines] .ch {
+  display: inline-block;
+  transition: transform 1.3s var(--ease-out);
+  transition-delay: calc(var(--c, 0) * 38ms + var(--i, 0) * 110ms + var(--d, 0ms));
+}
+
+html.js [data-lines]:not(.is-in) .ch {
+  transform: translateY(108%);
+}
+
+[data-lines].by-char > .line > .line-in {
+  transform: none !important;
+}
+
+/* フェード（ごく控えめ） */
+html.js [data-fade]:not(.is-in) {
   opacity: 0;
-  transform: translateY(40px);
+  transform: translateY(14px);
+}
+
+[data-fade] {
   transition:
-    opacity 0.9s var(--ease-out),
-    transform 0.9s var(--ease-out);
-  transition-delay: var(--reveal-delay, 0s);
+    opacity 1s var(--ease-out),
+    transform 1.2s var(--ease-out);
+  transition-delay: var(--d, 0ms);
 }
 
-html.js [data-reveal].is-inview {
-  opacity: 1;
-  transform: none;
+/* 画像のクリップリビール */
+html.js [data-clip]:not(.is-in) {
+  clip-path: inset(100% 0 0 0);
 }
 
-/* 文字分解（JSが .char に分割） */
-[data-split] .word {
-  display: inline-block;
+html.js [data-clip]:not(.is-in) img {
+  transform: scale(1.12);
+}
+
+[data-clip] {
+  clip-path: inset(0 0 0 0);
+  transition: clip-path 1.4s var(--ease);
+  transition-delay: var(--d, 0ms);
+}
+
+[data-clip] img {
+  transition: transform 1.8s var(--ease-out);
+  transition-delay: var(--d, 0ms);
+}
+
+/* ==========================================================================
+   Glass（WebGL で描く画像の器）
+   中の <img> はレイアウト・代替テキスト・WebGL 非対応時の表示を担う。
+   ========================================================================== */
+.glass {
+  position: relative;
   overflow: hidden;
-  vertical-align: bottom;
 }
 
-[data-split] .char {
-  display: inline-block;
-  transform: translateY(110%);
-  will-change: transform;
-}
-
-/* スクロールプログレスバー */
-.scroll-progress {
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 2px;
+.glass > img,
+.glass > picture,
+.glass > picture > img {
+  display: block;
   width: 100%;
-  transform-origin: 0 50%;
-  transform: scaleX(0);
-  background: var(--grad-holo);
-  z-index: 1000;
-  pointer-events: none;
+  height: 100%;
+  object-fit: cover;
 }
 
-/* ==========================================================================
-   Custom cursor（PCのみ・軽量版）
-   ========================================================================== */
-.cursor-dot,
-.cursor-ring {
-  display: none;
+.glass-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
-@media (hover: hover) and (pointer: fine) {
-  .cursor-dot,
-  .cursor-ring {
-    display: block;
-    position: fixed;
-    top: 0;
-    left: 0;
-    pointer-events: none;
-    border-radius: 50%;
-    z-index: 2000;
-    transform: translate(-50%, -50%);
-  }
-
-  .cursor-dot {
-    width: 6px;
-    height: 6px;
-    background: var(--holo-1);
-  }
-
-  .cursor-ring {
-    width: 36px;
-    height: 36px;
-    border: 1px solid rgba(110, 231, 255, 0.5);
-    transition:
-      width 0.25s ease,
-      height 0.25s ease,
-      border-color 0.25s ease;
-  }
-
-  body.cursor-hover .cursor-ring {
-    width: 56px;
-    height: 56px;
-    border-color: rgba(255, 139, 216, 0.8);
-  }
+.glass.is-gl {
+  background: none !important;
 }
 
-/* ==========================================================================
-   Reduced motion — 全モーション無効化
-   ========================================================================== */
+.glass.is-gl > img,
+.glass.is-gl > picture {
+  visibility: hidden;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+  [data-lines] > .line > .line-in,
+  [data-lines] .ch,
+  [data-fade],
+  [data-clip],
+  [data-clip] img {
+    transition: none !important;
   }
+}
 
-  [data-reveal],
-  [data-split] .char {
-    opacity: 1 !important;
-    transform: none !important;
-  }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }

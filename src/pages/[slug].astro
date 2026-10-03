@@ -2,358 +2,428 @@
 import { getCollection, render } from 'astro:content';
 import { Image } from 'astro:assets';
 import Base from '../layouts/Base.astro';
-import YouTubeEmbed from '../components/YouTubeEmbed.astro';
+import Lines from '../components/Lines.astro';
+import Film from '../components/Film.astro';
+import { previewSrc } from '../lib/images';
 
 export async function getStaticPaths() {
-  const works = (await getCollection('works')).sort(
-    (a, b) => a.data.order - b.data.order
-  );
-  return works.map((work, i) => ({
-    params: { slug: work.id },
-    props: {
-      work,
-      prev: i > 0 ? works[i - 1] : null,
-      next: i < works.length - 1 ? works[i + 1] : null,
-    },
-  }));
+  const works = (await getCollection('works')).sort((a, b) => a.data.order - b.data.order);
+  const released = works.filter((w) => !w.data.comingSoon);
+  return works.map((work) => {
+    const i = released.indexOf(work);
+    const next = i === -1 ? released[0] : released[(i + 1) % released.length];
+    return { params: { slug: work.id }, props: { work, next, total: released.length } };
+  });
 }
 
-const { work, prev, next } = Astro.props;
+const { work, next, total } = Astro.props;
 const { data } = work;
 const { Content } = await render(work);
+const no = String(data.order).padStart(2, '0');
+const cardImg = data.card ?? data.cover;
+const src = cardImg ? await previewSrc(cardImg) : undefined;
+const meta = [
+  { k: 'Role', v: data.role },
+  { k: 'Tech', v: data.tech },
+  { k: 'Year', v: data.year },
+].filter((m) => m.v);
 ---
 
-<Base title={`${data.title} | Yuki Hamaguchi`} description={`${data.subtitle} - Project Details`}>
-  <main class="detail">
-    <!-- Hero -->
-    <div class="detail-hero">
+<Base title={`${data.title} — ${data.subtitle} | Yuki Hamaguchi`} description={data.concept ?? `${data.subtitle} by Yuki Hamaguchi`}>
+  <main id="top" class="detail">
+    <!-- ================================ HERO ================================ -->
+    <section class="d-hero wrap grid">
+      <div class="d-hero-top">
+        <a class="label label-ink back" href="/#works">← Index</a>
+        <p class="label num" data-fade data-manual style="--d: 200ms">
+          Project {no}{!data.comingSoon && <> / {String(total).padStart(2, '0')}</>}
+        </p>
+      </div>
+
+      <div class="d-hero-text">
+        <p class="label d-sub" data-fade data-manual style="--d: 260ms">{data.subtitle}</p>
+        <Lines as="h1" class="d-title jp" lines={[data.title]} manual delay={120} />
+      </div>
+
       {
-        data.cover && (
-          <div class="detail-hero-img" transition:name={`work-${work.id}`}>
-            <Image src={data.cover} alt={data.title} width={1600} densities={[1, 2]} loading="eager" />
+        src ? (
+          <figure class="d-visual glass" data-glass data-src={src} data-focus={data.cardFocus} data-clip data-manual>
+            <img src={src} alt={data.title} loading="eager" />
+          </figure>
+        ) : (
+          <div class="d-visual d-visual-empty" aria-hidden="true">
+            <span class="label">In development</span>
           </div>
         )
       }
-      <div class="detail-hero-veil" aria-hidden="true"></div>
-    </div>
-
-    <div class="detail-body container">
-      <header class="detail-head">
-        <p class="kicker" data-reveal>Project</p>
-        <h1 class="detail-title font-head" data-split>{data.title}</h1>
-        <p class="detail-sub font-head text-holo" data-reveal>{data.subtitle}</p>
-      </header>
 
       {
-        !data.comingSoon && (data.role || data.tech || data.year) && (
-          <dl class="meta" data-reveal-group>
-            {data.role && (
-              <div class="meta-item" data-reveal>
-                <dt class="font-head">ROLE</dt>
-                <dd>{data.role}</dd>
+        meta.length > 0 && (
+          <dl class="d-meta">
+            {meta.map((m, i) => (
+              <div data-fade data-manual style={`--d:${380 + i * 70}ms`}>
+                <dt class="label">{m.k}</dt>
+                <dd>{m.v}</dd>
               </div>
-            )}
-            {data.tech && (
-              <div class="meta-item" data-reveal>
-                <dt class="font-head">TECH</dt>
-                <dd>{data.tech}</dd>
-              </div>
-            )}
-            {data.year && (
-              <div class="meta-item" data-reveal>
-                <dt class="font-head">YEAR</dt>
-                <dd>{data.year}</dd>
-              </div>
-            )}
+            ))}
           </dl>
         )
       }
+    </section>
 
-      {
-        data.comingSoon ? (
-          <p class="coming-soon font-head" data-reveal>
-            Coming soon...
-          </p>
-        ) : (
-          <>
-            {data.concept && (
-              <section class="block" data-reveal>
-                <h2 class="block-title font-head">Concept</h2>
-                <p class="concept-ja">{data.concept}</p>
-                {data.conceptEn && <p class="concept-en font-head">{data.conceptEn}</p>}
-              </section>
-            )}
-
-            <section class="block prose" data-reveal>
-              <h2 class="block-title font-head">Overview</h2>
-              <Content />
+    {
+      data.comingSoon ? (
+        <section class="wrap grid d-block">
+          <p class="d-label label">Status</p>
+          <div class="d-col">
+            <Lines as="p" class="statement" lines={['ただいま制作中です。']} />
+            <p class="en-note d-en" data-fade>
+              In development. Coming soon.
+            </p>
+          </div>
+        </section>
+      ) : (
+        <>
+          {data.concept && (
+            <section class="wrap grid d-block">
+              <p class="d-label label" data-fade>Concept</p>
+              <div class="d-col">
+                <Lines as="p" class="statement d-concept" lines={[data.concept]} />
+                {data.conceptEn && (
+                  <p class="en-note d-en" data-fade>
+                    {data.conceptEn}
+                  </p>
+                )}
+              </div>
             </section>
+          )}
 
-            {data.youtube && (
-              <section class="block" data-reveal>
-                <h2 class="block-title font-head">Demo Video</h2>
-                <YouTubeEmbed id={data.youtube} title={`${data.title} demo video`} aspect={data.youtubeAspect} />
-              </section>
-            )}
+          <section class="wrap grid d-block">
+            <p class="d-label label" data-fade>Overview</p>
+            <div class="d-col d-prose jp" data-fade>
+              <Content />
+            </div>
+          </section>
 
-            {data.gallery.length > 0 && (
-              <section class="block">
-                <h2 class="block-title font-head" data-reveal>
-                  Gallery
-                </h2>
-                <div class="gallery" data-reveal-group>
-                  {data.gallery.map((img, i) => (
-                    <figure class="gallery-item" data-reveal>
-                      <Image src={img} alt={`${data.title} 画像 ${i + 1}`} width={960} densities={[1, 2]} loading="lazy" />
-                    </figure>
-                  ))}
-                </div>
-              </section>
-            )}
-          </>
-        )
-      }
+          {data.youtube && (
+            <section class="wrap grid d-block">
+              <p class="d-label label" data-fade>Film</p>
+              <div class:list={['d-film', `is-${data.youtubeAspect}`]}>
+                <Film id={data.youtube} title={data.title} poster={cardImg} aspect={data.youtubeAspect} />
+              </div>
+            </section>
+          )}
 
-      <!-- 前後の作品ナビ -->
-      <nav class="work-nav" aria-label="作品ナビゲーション">
-        {
-          prev && !prev.data.comingSoon ? (
-            <a class="work-nav-link prev" href={`/${prev.id}`}>
-              <span class="dir font-head">← PREV</span>
-              <span class="name">{prev.data.title}</span>
-            </a>
-          ) : (
-            <span />
-          )
-        }
-        <a class="work-nav-back font-head" href="/#works">ALL WORKS</a>
-        {
-          next && !next.data.comingSoon ? (
-            <a class="work-nav-link next" href={`/${next.id}`}>
-              <span class="dir font-head">NEXT →</span>
-              <span class="name">{next.data.title}</span>
-            </a>
-          ) : (
-            <span />
-          )
-        }
-      </nav>
-    </div>
+          {data.gallery.length > 0 && (
+            <section class="wrap d-block d-gallery-wrap">
+              <div class="grid">
+                <p class="d-label label" data-fade>
+                  Gallery <span class="num">({String(data.gallery.length).padStart(2, '0')})</span>
+                </p>
+              </div>
+              <div class="grid d-gallery">
+                {data.gallery.map((img, i) => (
+                  <figure class:list={['g-item', `g-${i % 4}`]}>
+                    <div class="g-img" data-clip>
+                      <Image src={img} alt={`${data.title} — ${i + 1}`} width={1400} loading="lazy" />
+                    </div>
+                    <figcaption class="label num">
+                      {no}.{String(i + 1).padStart(2, '0')}
+                    </figcaption>
+                  </figure>
+                ))}
+              </div>
+            </section>
+          )}
+        </>
+      )
+    }
+
+    <!-- ============================ NEXT PROJECT ============================ -->
+    {
+      next && next.id !== work.id && (
+        <a class="d-next wrap" href={`/${next.id}`}>
+          <span class="label">Next project — {String(next.data.order).padStart(2, '0')}</span>
+          <span class="d-next-title jp">
+            {next.data.title}
+            <span class="d-next-arrow" aria-hidden="true">→</span>
+          </span>
+          <span class="label">{next.data.subtitle}</span>
+        </a>
+      )
+    }
   </main>
 </Base>
 
 <style>
-  .detail {
-    padding-top: var(--header-h);
+  /* =============================== Hero =============================== */
+  .d-hero {
+    min-height: 100svh;
+    padding-top: calc(var(--header-h) + 8px);
+    padding-bottom: 28px;
+    grid-template-rows: auto 1fr auto;
+    row-gap: 24px;
   }
 
-  .detail-hero {
-    position: relative;
-    height: 56vh;
-    min-height: 320px;
-    overflow: hidden;
-  }
-
-  .detail-hero-img,
-  .detail-hero-img :global(img) {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .detail-hero-veil {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to bottom, rgba(7, 7, 13, 0.15) 0%, var(--bg) 100%);
-  }
-
-  .detail-body {
-    max-width: 900px;
-    padding-block: clamp(40px, 7vh, 72px);
-  }
-
-  .detail-head {
-    margin-bottom: 40px;
-  }
-
-  .detail-title {
-    font-size: clamp(2rem, 6vw, 3.2rem);
-    font-weight: 700;
-    line-height: 1.15;
-    margin-block: 10px 8px;
-  }
-
-  .detail-sub {
-    font-size: 0.95rem;
-    font-weight: 500;
-    letter-spacing: 0.24em;
-    text-transform: uppercase;
-  }
-
-  .meta {
+  .d-hero-top {
+    grid-column: 1 / -1;
     display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-bottom: clamp(40px, 7vh, 64px);
+    justify-content: space-between;
+    padding-block: 12px;
+    border-top: 1px solid var(--line-strong);
   }
 
-  .meta-item {
-    padding: 14px 22px;
-    border-radius: var(--radius);
-    background: var(--surface);
-    border: 1px solid var(--line);
-    min-width: 140px;
+  .back:hover {
+    color: var(--mute);
   }
 
-  .meta-item dt {
-    font-size: 0.65rem;
-    letter-spacing: 0.26em;
-    background: var(--grad-holo);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    margin-bottom: 4px;
+  .d-hero-text {
+    grid-column: 1 / span 7;
+    grid-row: 2;
+    align-self: end;
   }
 
-  .meta-item dd {
-    font-size: 0.9rem;
-    color: var(--text);
+  .d-sub {
+    margin-bottom: 18px;
   }
 
-  .block {
-    margin-bottom: clamp(48px, 8vh, 72px);
-  }
-
-  .block-title {
-    font-size: 1.1rem;
+  .d-title {
+    font-family: var(--f-sans);
+    text-wrap: balance;
+    font-size: clamp(38px, 7.2vw, 128px);
     font-weight: 700;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    margin-bottom: 22px;
-    display: inline-block;
-    border-bottom: 2px solid transparent;
-    border-image: var(--grad-holo) 1;
-    padding-bottom: 6px;
+    line-height: 1.08;
+    letter-spacing: -0.01em;
   }
 
-  .concept-ja {
-    font-size: 1.2rem;
-    font-weight: 700;
-    line-height: 1.9;
-    margin-bottom: 10px;
+  .d-visual {
+    grid-column: 8 / -1;
+    grid-row: 2 / span 2;
+    margin: 0;
+    min-height: 0;
+    height: calc(100svh - var(--header-h) - 96px);
+    background: var(--paper-2);
   }
 
-  .concept-en {
-    color: var(--text-dim);
-    font-size: 0.9rem;
-    letter-spacing: 0.03em;
-  }
-
-  .prose :global(p) {
-    margin-bottom: 1.6em;
-    line-height: 2;
-  }
-
-  .prose :global(.prose-en p) {
-    color: var(--text-dim);
-    font-size: 0.92rem;
-    line-height: 1.9;
-  }
-
-  .gallery {
+  .d-visual-empty {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
+    place-items: center;
   }
 
-  .gallery-item {
-    border-radius: var(--radius);
-    overflow: hidden;
-    border: 1px solid var(--line);
-    background: #000;
-  }
-
-  .gallery-item :global(img) {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.7s var(--ease-out);
-  }
-
-  .gallery-item:hover :global(img) {
-    transform: scale(1.04);
-  }
-
-  .coming-soon {
-    font-size: 1.4rem;
-    letter-spacing: 0.3em;
-    color: var(--text-faint);
-    padding-block: 10vh;
-    text-align: center;
-  }
-
-  .work-nav {
+  .d-meta {
+    grid-column: 1 / span 7;
+    grid-row: 3;
     display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    align-items: center;
-    gap: 20px;
+    grid-template-columns: 1fr 1.6fr 0.6fr;
+    gap: var(--gutter);
+    margin-top: 20px;
+  }
+
+  .d-meta > div {
     border-top: 1px solid var(--line);
-    padding-top: 36px;
+    padding-top: 12px;
   }
 
-  .work-nav-link {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    transition: opacity var(--dur-fast) ease;
+  .d-meta dt {
+    margin-bottom: 6px;
   }
 
-  .work-nav-link:hover {
-    opacity: 0.75;
+  .d-meta dd {
+    font-size: 14px;
+    line-height: 1.6;
   }
 
-  .work-nav-link.next {
-    text-align: right;
+  /* ============================== Blocks ============================== */
+  .d-block {
+    padding-block: clamp(72px, 12vh, 140px) 0;
   }
 
-  .work-nav-link .dir {
-    font-size: 0.68rem;
-    letter-spacing: 0.24em;
-    color: var(--text-faint);
+  .d-label {
+    grid-column: 1 / span 3;
+    padding-top: 0.6em;
   }
 
-  .work-nav-link .name {
-    font-size: 0.92rem;
+  .d-col {
+    grid-column: 4 / span 8;
   }
 
-  .work-nav-back {
-    font-size: 0.78rem;
-    letter-spacing: 0.24em;
-    color: var(--text-dim);
-    border-bottom: 1px solid transparent;
-    padding-bottom: 3px;
-    transition:
-      color var(--dur-fast) ease,
-      border-color var(--dur-fast) ease;
+  .d-concept {
+    font-size: clamp(24px, 2.8vw, 44px);
   }
 
-  .work-nav-back:hover {
-    color: var(--holo-1);
-    border-bottom-color: var(--holo-1);
+  .d-en {
+    margin-top: 28px;
+    max-width: 36em;
   }
 
-  @media (max-width: 640px) {
-    .gallery {
+  .d-prose {
+    font-size: 16px;
+    line-height: 2.1;
+    max-width: 38em;
+  }
+
+  .d-prose :global(p + p) {
+    margin-top: 1.3em;
+  }
+
+  .d-prose :global(.prose-en) {
+    margin-top: 2.6em;
+    padding-top: 1.6em;
+    border-top: 1px solid var(--line);
+    font-family: var(--f-sans);
+    font-size: 14px;
+    line-height: 1.8;
+    letter-spacing: 0;
+    color: var(--ink-2);
+  }
+
+  .d-film.is-vertical {
+    grid-column: 4 / span 4;
+  }
+
+  .d-film.is-wide {
+    grid-column: 4 / -1;
+  }
+
+  /* ============================== Gallery ============================== */
+  .d-gallery {
+    margin-top: 40px;
+    row-gap: clamp(48px, 8vh, 100px);
+    align-items: start;
+  }
+
+  .g-item {
+    margin: 0;
+  }
+
+  .g-0 {
+    grid-column: 1 / span 7;
+  }
+
+  .g-1 {
+    grid-column: 9 / -1;
+    margin-top: 22vh;
+  }
+
+  .g-2 {
+    grid-column: 3 / span 5;
+  }
+
+  .g-3 {
+    grid-column: 8 / -1;
+    margin-top: 12vh;
+  }
+
+  .g-img {
+    overflow: hidden;
+    background: var(--paper-2);
+  }
+
+  .g-img :global(img) {
+    width: 100%;
+    height: auto;
+  }
+
+  figcaption {
+    margin-top: 10px;
+  }
+
+  /* ============================ Next project ============================ */
+  .d-next {
+    display: grid;
+    gap: 12px;
+    margin-top: clamp(120px, 20vh, 220px);
+    padding-block: clamp(40px, 6vh, 64px) clamp(64px, 12vh, 120px);
+    border-top: 1px solid var(--line-strong);
+  }
+
+  .d-next-title {
+    font-family: var(--f-sans);
+    font-size: clamp(40px, 7vw, 120px);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.25em;
+    transition: transform 0.9s var(--ease-out);
+  }
+
+  .d-next-arrow {
+    font-family: var(--f-sans);
+    font-weight: 300;
+    transition: transform 0.9s var(--ease-out);
+  }
+
+  .d-next:hover .d-next-title {
+    transform: translateX(0.12em);
+  }
+
+  .d-next:hover .d-next-arrow {
+    transform: translateX(0.2em);
+  }
+
+  /* ============================== Mobile ============================== */
+  @media (max-width: 1100px) {
+    .d-meta {
       grid-template-columns: 1fr;
+      gap: 0;
     }
 
-    .work-nav {
-      grid-template-columns: 1fr;
-      justify-items: start;
+    .d-meta > div {
+      display: grid;
+      grid-template-columns: 5em 1fr;
+      padding-block: 10px;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .d-hero {
+      grid-template-rows: auto auto auto auto;
     }
 
-    .work-nav-link.next {
-      text-align: left;
+    .d-visual {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      height: auto;
+      aspect-ratio: 4 / 5;
+    }
+
+    .d-hero-text {
+      grid-column: 1 / -1;
+      grid-row: 3;
+    }
+
+    .d-meta {
+      grid-column: 1 / -1;
+      grid-row: 4;
+    }
+
+    .d-label {
+      grid-column: 1 / -1;
+      margin-bottom: 20px;
+    }
+
+    .d-col,
+    .d-film.is-wide {
+      grid-column: 1 / -1;
+    }
+
+    .d-film.is-vertical {
+      grid-column: 1 / span 3;
+    }
+
+    .g-0,
+    .g-1,
+    .g-2,
+    .g-3 {
+      grid-column: 1 / -1;
+      margin-top: 0;
+    }
+
+    .g-1,
+    .g-3 {
+      grid-column: 2 / -1;
     }
   }
 </style>
