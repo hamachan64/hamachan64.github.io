@@ -54,6 +54,7 @@ function createGlass(el: HTMLElement, intro: boolean): Glass | null {
       seam: seam ? Number(seam) : undefined,
       getVelocity: () => lenis?.velocity ?? 0,
       intro,
+      mono: el.hasAttribute('data-mono'),
     });
   } catch (err) {
     console.warn('[glass] disabled:', err);
@@ -75,6 +76,7 @@ function initGlass() {
   const lazy = document.querySelectorAll<HTMLElement>('[data-glass="lazy"]');
   if (lazy.length === 0) return;
   const live = new Map<HTMLElement, Glass>();
+  const noHover = window.matchMedia('(hover: none)');
   const io = new IntersectionObserver(
     (entries) => {
       entries.forEach(({ target, isIntersecting }) => {
@@ -82,7 +84,10 @@ function initGlass() {
         if (isIntersecting && !live.has(el)) {
           // 登場は CSS のクリップで見せ、ガラスは結像済みの状態から描く
           const g = createGlass(el, false);
-          if (g) live.set(el, g);
+          if (g) {
+            live.set(el, g);
+            requestAnimationFrame(onScroll);
+          }
         } else if (!isIntersecting && live.has(el)) {
           live.get(el)!.destroy();
           live.delete(el);
@@ -92,7 +97,41 @@ function initGlass() {
     { rootMargin: '40% 0px' }
   );
   lazy.forEach((el) => io.observe(el));
+
+  // 行（リンク）に入ったら、入った位置から色がにじむ。文字側から入れば、文字に近い辺から流れ込む
+  const at = (el: HTMLElement, e: PointerEvent): [number, number] => {
+    const r = el.getBoundingClientRect();
+    return [
+      gsap.utils.clamp(0, 1, (e.clientX - r.left) / r.width),
+      gsap.utils.clamp(0, 1, 1 - (e.clientY - r.top) / r.height),
+    ];
+  };
+  lazy.forEach((el) => {
+    const link = el.closest('a');
+    if (!link) return;
+    const enter = (e: PointerEvent) => e.pointerType === 'mouse' && live.get(el)?.bloom(true, at(el, e));
+    const leave = (e: PointerEvent) => e.pointerType === 'mouse' && live.get(el)?.bloom(false, at(el, e));
+    link.addEventListener('pointerenter', enter);
+    link.addEventListener('pointerleave', leave);
+    cleanups.push(() => {
+      link.removeEventListener('pointerenter', enter);
+      link.removeEventListener('pointerleave', leave);
+    });
+  });
+
+  // ホバーできない端末では、画面の中央にある1枚だけ色を戻す
+  function onScroll() {
+    if (!noHover.matches) return;
+    const mid = window.innerHeight / 2;
+    live.forEach((g, el) => {
+      const r = el.getBoundingClientRect();
+      g.bloom(r.top < mid && r.bottom > mid, [0.5, 0.5]);
+    });
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+
   cleanups.push(() => {
+    window.removeEventListener('scroll', onScroll);
     io.disconnect();
     live.forEach((g) => g.destroy());
     live.clear();

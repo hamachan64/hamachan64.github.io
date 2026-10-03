@@ -11,6 +11,7 @@ gallery:
   - ../../../assets/images/works/06/06-01.jpg
 youtube: 9oZq9TkVroQ
 youtubeAspect: wide
+cardFocus: "0.42 0.5"
 order: 6
 ---
 

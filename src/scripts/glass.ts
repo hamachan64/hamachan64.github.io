@@ -42,6 +42,9 @@ uniform float uTime;
 uniform float uSeam;
 uniform float uReveal;
 uniform float uVirtual;
+uniform float uMono;
+uniform float uBloom;
+uniform vec2 uBloomC;
 varying vec2 vUv;
 
 vec2 cover(vec2 uv, float box, float img, vec2 f) {
@@ -126,6 +129,21 @@ void main() {
   float glint = (abs(rip) * 0.9 + ring * 0.7 + frontW * 0.9) * virt;
   col += film(uv.x * 0.7 + uv.y * 0.4 + uTime * 0.04) * glint * 0.16;
 
+  // --- モノクロ（現実）→ 触れた点から色（仮想）がにじむ ---
+  if (uMono > 0.5) {
+    float l = dot(col, vec3(0.299, 0.587, 0.114));
+    l = smoothstep(0.03, 0.97, l);
+    vec3 duo = mix(vec3(0.075, 0.073, 0.068), vec3(0.925, 0.915, 0.89), l);
+    vec2 bp = vec2((uv.x - uBloomC.x) * box, uv.y - uBloomC.y);
+    float bd = length(bp) + (noise(uv * 5.0 + uTime * 0.15) - 0.5) * 0.14;
+    float reach = uBloom * (length(vec2(box, 1.0)) + 0.15);
+    float colorMask = (1.0 - smoothstep(reach - 0.06, reach + 0.01, bd)) * smoothstep(0.0, 0.04, uBloom);
+    col = mix(duo, col, colorMask);
+    // にじみの先端にだけ、薄く光の干渉色
+    float front = exp(-abs(bd - reach) * 34.0) * uBloom * (1.0 - uBloom) * 4.0;
+    col += film(uv.x * 0.6 + uv.y * 0.5 + uTime * 0.05) * front * 0.22;
+  }
+
   float alpha = mix(physVis, virtVis, virt);
   gl_FragColor = vec4(col, alpha);
 }
@@ -140,6 +158,8 @@ export interface GlassOptions {
   getVelocity?: () => number;
   /** false：登場の演出は外側（CSS）に任せ、最初から結像した状態で描く */
   intro?: boolean;
+  /** true：普段はモノクロで描き、触れた点から色がにじむ */
+  mono?: boolean;
   reducedMotion?: boolean;
 }
 
@@ -179,7 +199,21 @@ export class Glass {
     this.last = null;
   };
 
-  s = { reveal: 0, virtual: 0, hover: 0, mix: 0 };
+  s = { reveal: 0, virtual: 0, hover: 0, mix: 0, bloom: 0 };
+  private blooming = false;
+
+  /** 色のにじみを開始／収束させる。at は要素上の位置（0〜1、y は上が 1） */
+  bloom(on: boolean, at?: [number, number]) {
+    if (on === this.blooming) return;
+    this.blooming = on;
+    if (at) this.program.uniforms.uBloomC.value = at;
+    gsap.to(this.s, {
+      bloom: on ? 1 : 0,
+      duration: this.opts.reducedMotion ? 0 : on ? 1.6 : 0.9,
+      ease: on ? 'sine.inOut' : 'power2.inOut',
+      overwrite: true,
+    });
+  }
 
   constructor(host: HTMLElement, opts: GlassOptions) {
     this.host = host;
@@ -228,6 +262,9 @@ export class Glass {
         uSeam: { value: opts.seam ?? -1 },
         uReveal: { value: 0 },
         uVirtual: { value: opts.seam ? 0 : 1 },
+        uMono: { value: opts.mono ? 1 : 0 },
+        uBloom: { value: 0 },
+        uBloomC: { value: [0.5, 0.5] },
       },
     });
     this.mesh = new Mesh(gl, { geometry: new Triangle(gl), program: this.program });
@@ -390,6 +427,7 @@ export class Glass {
     u.uReveal.value = s.reveal;
     u.uVirtual.value = s.virtual;
     u.uMix.value = s.mix;
+    u.uBloom.value = s.bloom;
     this.renderer.render({ scene: this.mesh });
   }
 
