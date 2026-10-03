@@ -45,6 +45,8 @@ uniform float uVirtual;
 uniform float uMono;
 uniform float uBloom;
 uniform vec2 uBloomC;
+uniform vec2 uBloomR;
+uniform float uHasB;
 varying vec2 vUv;
 
 vec2 cover(vec2 uv, float box, float img, vec2 f) {
@@ -129,16 +131,20 @@ void main() {
   float glint = (abs(rip) * 0.9 + ring * 0.7 + frontW * 0.9) * virt;
   col += film(uv.x * 0.7 + uv.y * 0.4 + uTime * 0.04) * glint * 0.16;
 
-  // --- モノクロ（現実）→ 触れた点から色（仮想）がにじむ ---
+  // --- モノクロ（現実）→ 物の位置から色（仮想）がにじむ ---
+  // uBloomR > 0 のときは、その矩形（かざされた物）から広がる。かざした後の像（tB）があれば、色と一緒に像も入れ替わる
   if (uMono > 0.5) {
-    float l = dot(col, vec3(0.299, 0.587, 0.114));
+    float l = dot(colA, vec3(0.299, 0.587, 0.114));
     l = smoothstep(0.03, 0.97, l);
     vec3 duo = mix(vec3(0.075, 0.073, 0.068), vec3(0.925, 0.915, 0.89), l);
     vec2 bp = vec2((uv.x - uBloomC.x) * box, uv.y - uBloomC.y);
-    float bd = length(bp) + (noise(uv * 5.0 + uTime * 0.15) - 0.5) * 0.14;
-    float reach = uBloom * (length(vec2(box, 1.0)) + 0.15);
-    float colorMask = (1.0 - smoothstep(reach - 0.06, reach + 0.01, bd)) * smoothstep(0.0, 0.04, uBloom);
-    col = mix(duo, col, colorMask);
+    vec2 q = abs(bp) - vec2(uBloomR.x * box, uBloomR.y);
+    float bd = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0);
+    bd += (noise(uv * 5.0 + uTime * 0.15) - 0.5) * 0.12;
+    float reach = uBloom * (length(vec2(box, 1.0)) + 0.2) - 0.06;
+    float colorMask = (1.0 - smoothstep(reach - 0.06, reach + 0.01, bd)) * smoothstep(0.0, 0.03, uBloom);
+    vec3 virtCol = mix(colA, colB, uHasB);
+    col = mix(duo, virtCol, colorMask);
     // にじみの先端にだけ、薄く光の干渉色
     float front = exp(-abs(bd - reach) * 34.0) * uBloom * (1.0 - uBloom) * 4.0;
     col += film(uv.x * 0.6 + uv.y * 0.5 + uTime * 0.05) * front * 0.22;
@@ -160,6 +166,10 @@ export interface GlassOptions {
   intro?: boolean;
   /** true：普段はモノクロで描き、触れた点から色がにじむ */
   mono?: boolean;
+  /** mono のとき、にじんだ先に現れる「かざした後」の画像 */
+  after?: string;
+  /** mono のとき、にじみが始まる物の矩形 [x, y, w, h]（要素に対する 0〜1、y は上から） */
+  target?: [number, number, number, number];
   reducedMotion?: boolean;
 }
 
@@ -206,7 +216,7 @@ export class Glass {
   bloom(on: boolean, at?: [number, number]) {
     if (on === this.blooming) return;
     this.blooming = on;
-    if (at) this.program.uniforms.uBloomC.value = at;
+    if (at && !this.opts.target) this.program.uniforms.uBloomC.value = at;
     gsap.to(this.s, {
       bloom: on ? 1 : 0,
       duration: this.opts.reducedMotion ? 0 : on ? 1.6 : 0.9,
@@ -265,10 +275,27 @@ export class Glass {
         uMono: { value: opts.mono ? 1 : 0 },
         uBloom: { value: 0 },
         uBloomC: { value: [0.5, 0.5] },
+        uBloomR: { value: [0, 0] },
+        uHasB: { value: 0 },
       },
     });
     this.mesh = new Mesh(gl, { geometry: new Triangle(gl), program: this.program });
     this.blankTex = { tex: blank, aspect: 1 };
+    if (opts.target) {
+      const [tx, ty, tw, th] = opts.target;
+      this.program.uniforms.uBloomC.value = [tx + tw / 2, 1 - (ty + th / 2)];
+      this.program.uniforms.uBloomR.value = [tw / 2, th / 2];
+    }
+    if (opts.after) {
+      this.load(opts.after)
+        .then((t) => {
+          const u = this.program.uniforms;
+          u.tB.value = t.tex;
+          u.uAspB.value = t.aspect;
+          u.uHasB.value = 1;
+        })
+        .catch(() => undefined);
+    }
     if (opts.intro === false) {
       this.revealed = true;
       this.s.reveal = 1;

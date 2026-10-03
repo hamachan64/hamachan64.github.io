@@ -1,9 +1,9 @@
 ---
 import { getCollection } from 'astro:content';
-import { Image, getImage } from 'astro:assets';
+import { getImage } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
 import Base from '../layouts/Base.astro';
 import Lines from '../components/Lines.astro';
-import { previewSrc } from '../lib/images';
 import portraitWide from '../../assets/images/profile.jpg';
 import portraitTall from '../../assets/images/profile_t.jpg';
 
@@ -11,32 +11,22 @@ const works = (await getCollection('works')).sort((a, b) => a.data.order - b.dat
 const released = works.filter((w) => !w.data.comingSoon);
 const pad = (n: number) => String(n).padStart(2, '0');
 
-// 公開済みの作品：1件ずつ画像を大きく見せる
+// Works：作品ごとに「かざす前（物）」と「かざした後（端末越しの像）」を正方形で持つ
+const square = async (img: ImageMetadata) =>
+  (await getImage({ src: img, width: 960, height: 960, fit: 'cover', format: 'webp', quality: 82 })).src;
 const items = await Promise.all(
-  released.map(async (w) => {
-    const img = (w.data.card ?? w.data.cover)!;
-    const [fx, fy] = w.data.cardFocus.split(/\s+/);
-    return {
-      id: w.id,
-      no: pad(w.data.order),
-      title: w.data.title,
-      subtitle: w.data.subtitle,
-      concept: w.data.concept,
-      tech: w.data.tech,
-      year: w.data.year,
-      focus: w.data.cardFocus,
-      position: `${Number(fx) * 100}% ${Number(fy) * 100}%`,
-      src: await previewSrc(img),
-    };
-  })
+  works.map(async (w) => ({
+    id: w.id,
+    no: pad(w.data.order),
+    title: w.data.title,
+    year: w.data.year,
+    medium: w.data.medium,
+    comingSoon: w.data.comingSoon,
+    target: w.data.target,
+    before: w.data.before ? await square(w.data.before) : undefined,
+    after: w.data.after ? await square(w.data.after) : undefined,
+  }))
 );
-// 制作中の作品と、未発表の枠（画像は出さず、一覧の最後に小さく添える）
-const upcoming = [
-  ...works
-    .filter((w) => w.data.comingSoon)
-    .map((w) => ({ no: pad(w.data.order), title: w.data.title, note: w.data.subtitle })),
-  ...[works.length + 1, works.length + 2].map((n) => ({ no: pad(n), title: 'Coming soon', note: '' })),
-];
 
 // Hero：PC は横長、モバイルは縦長。どちらも本人と鏡像が向かい合う構図
 const wide = await getImage({ src: portraitWide, widths: [720, 1024], format: 'webp', quality: 86 });
@@ -172,44 +162,64 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
         <span class="label num">2025—2026 · {pad(released.length)} projects</span>
       </header>
 
-      <ol class="works-list">
-        {
-          items.map((w, i) => (
-            <li class="work">
-              <a class="work-link grid" href={`/${w.id}`}>
-                <figure class="work-img glass" data-glass="lazy" data-mono data-src={w.src} data-focus={w.focus} data-clip>
-                  <img src={w.src} alt="" loading={i < 2 ? 'eager' : 'lazy'} style={`object-position:${w.position}`} />
-                </figure>
-                <span class="work-text">
-                  <span class="work-no label num">{w.no}</span>
-                  <span class="work-title">
-                    {w.title}
-                    <span class="work-arrow" aria-hidden="true">
-                      →
+      <div class="grid works-body">
+        <aside class="works-index">
+          <p class="works-lead jp">作品にカーソルをかざすと、<br />AR で見たときの姿に切り替わります。</p>
+          <p class="works-lead jp is-touch">画面の中央に来た作品は、<br />AR で見たときの姿に切り替わります。</p>
+          <ol>
+            {
+              items.map((w) => (
+                <li>
+                  <a class:list={['ix-row', { 'is-soon': w.comingSoon }]} href={w.comingSoon ? undefined : `/${w.id}`} data-ix={w.id}>
+                    <span class="num">{w.no}</span>
+                    <span class="ix-title">{w.title}</span>
+                    <span class="num ix-year">{w.comingSoon ? '制作中' : w.year}</span>
+                    <i class="mk" aria-hidden="true" />
+                  </a>
+                </li>
+              ))
+            }
+          </ol>
+        </aside>
+
+        <ol class="works-grid">
+          {
+            items.map((w, i) => (
+              <li class:list={['work', { 'is-soon': w.comingSoon }]} data-work={w.id}>
+                <a class="work-link" href={w.comingSoon ? undefined : `/${w.id}`}>
+                  {w.before ? (
+                    <figure
+                      class="work-img glass"
+                      data-glass="lazy"
+                      data-mono
+                      data-src={w.before}
+                      data-after={w.after}
+                      data-target={w.target}
+                      data-clip
+                      style={`--d:${(i % 3) * 90}ms`}
+                    >
+                      <img class="before" src={w.before} alt={`${w.title}：かざす前`} width="960" height="960" loading={i < 3 ? 'eager' : 'lazy'} />
+                      {w.after && <img class="after" src={w.after} alt={`${w.title}：かざした後`} width="960" height="960" loading="lazy" />}
+                    </figure>
+                  ) : (
+                    <figure class="work-img work-empty" aria-hidden="true">
+                      <span class="label">未検出</span>
+                    </figure>
+                  )}
+                  <span class="work-cap">
+                    <span class="label num work-no">{w.no}</span>
+                    <span class="work-title">{w.title}</span>
+                    <span class="work-state label">
+                      <i class="mk" aria-hidden="true" />
+                      <span class="s-before">{w.comingSoon ? '制作中' : 'かざす前'}</span>
+                      <span class="s-after">かざした後</span>
+                    </span>
+                    <span class="work-medium label">
+                      {w.medium}
+                      {w.year && <span class="num">　{w.year}</span>}
                     </span>
                   </span>
-                  <span class="work-sub label">{w.subtitle}</span>
-                  {w.concept && <span class="work-concept jp">{w.concept}</span>}
-                  <span class="work-foot label">
-                    <span class="num">{w.year}</span>
-                    <span>{w.tech}</span>
-                  </span>
-                </span>
-              </a>
-            </li>
-          ))
-        }
-      </ol>
-
-      <div class="upcoming">
-        <h3 class="label label-ink">In the works</h3>
-        <ol>
-          {
-            upcoming.map((u) => (
-              <li class="label">
-                <span class="num">{u.no}</span>
-                <span class="upcoming-title">{u.title}</span>
-                <span>{u.note || '—'}</span>
+                </a>
               </li>
             ))
           }
@@ -472,32 +482,136 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
     padding-block: clamp(140px, 22vh, 240px) clamp(120px, 20vh, 200px);
   }
 
-  /* ---- 見開きの行：Hero と同じ 3 : 9 の分割（左3列＝紙面の文字、右9列＝像）を全作品で繰り返す ---- */
-  .work + .work {
-    margin-top: clamp(64px, 11vh, 128px);
+  /* 左3列＝索引（Hero の文字の列と同じ幅）、右9列＝作品（Hero の写真と同じ左端） */
+  .works-body {
+    align-items: start;
   }
 
-  .work-link {
-    align-items: stretch;
-    padding-top: 14px;
+  .works-index {
+    grid-column: 1 / span 3;
+    position: sticky;
+    top: calc(var(--header-h) + 24px);
+    padding-right: 8px;
+  }
+
+  .works-lead {
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--mute);
+    margin-bottom: 28px;
+  }
+
+  .works-lead.is-touch {
+    display: none;
+  }
+
+  @media (hover: none) {
+    .works-lead {
+      display: none;
+    }
+
+    .works-lead.is-touch {
+      display: block;
+    }
+  }
+
+  .works-index ol {
     border-top: 1px solid var(--line-strong);
   }
 
-  .work-text {
-    grid-column: 1 / span 3;
-    grid-row: 1;
-    padding-right: 8px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+  .ix-row {
+    display: grid;
+    grid-template-columns: 2.6em minmax(0, 1fr) auto 14px;
+    align-items: baseline;
+    column-gap: 10px;
+    padding-block: 9px;
+    border-bottom: 1px solid var(--line);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .ix-row .num {
+    font-size: 12px;
+    color: var(--mute);
+  }
+
+  .ix-row.is-on .num:first-child,
+  .ix-row.is-on .ix-title {
+    color: var(--ink);
+  }
+
+  .ix-row.is-soon {
+    color: var(--mute);
+  }
+
+  /* 状態マーカー：□ かざす前 → ■ かざした後（中間はない） */
+  .mk {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border: 1px solid currentColor;
+    align-self: center;
+  }
+
+  .is-on .mk,
+  .is-on > .mk {
+    background: currentColor;
+  }
+
+  .works-grid {
+    grid-column: 4 / -1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: var(--gutter);
+    row-gap: clamp(40px, 6vh, 64px);
+  }
+
+  .work-link {
+    display: block;
   }
 
   .work-img {
-    grid-column: 4 / -1;
-    grid-row: 1;
     margin: 0;
-    aspect-ratio: 2 / 1;
+    aspect-ratio: 1;
     background: var(--paper-2);
+  }
+
+  /* WebGL が使えないとき：普段はモノクロ、かざすと色付きの「かざした後」に切り替わる */
+  .work-img > img {
+    position: absolute;
+    inset: 0;
+    filter: grayscale(1) contrast(1.05);
+    transition:
+      opacity 0.6s ease,
+      filter 0.8s ease;
+  }
+
+  .work-img > img.after {
+    opacity: 0;
+    filter: none;
+  }
+
+  .work.is-on .work-img > img.before {
+    filter: none;
+  }
+
+  .work.is-on .work-img > img.after {
+    opacity: 1;
+  }
+
+  .work-empty {
+    display: grid;
+    place-items: center;
+    background: none;
+    border: 1px dashed var(--line-strong);
+  }
+
+  .work-cap {
+    display: grid;
+    grid-template-columns: 2.4em minmax(0, 1fr) auto;
+    column-gap: 8px;
+    row-gap: 2px;
+    padding-top: 12px;
   }
 
   .work-no {
@@ -505,87 +619,34 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
   }
 
   .work-title {
-    margin-top: clamp(20px, 3.5vh, 40px);
-    font-size: clamp(24px, 2.25vw, 36px);
+    font-size: 15px;
     font-weight: 500;
-    line-height: 1.12;
-    letter-spacing: -0.02em;
-    word-break: auto-phrase;
-    text-wrap: balance;
+    line-height: 1.4;
+  }
+
+  .work-state {
     display: inline-flex;
-    align-items: baseline;
-    gap: 0.3em;
-  }
-
-  .work-sub {
-    margin-top: 10px;
-  }
-
-  .work-concept {
-    margin-top: clamp(20px, 3vh, 32px);
-    max-width: 22em;
-    font-family: var(--f-min);
-    font-size: clamp(15px, 1.2vw, 18px);
-    line-height: 1.9;
-    color: var(--ink-2);
-  }
-
-  .work-foot {
-    margin-top: auto;
-    padding-top: 28px;
-    display: flex;
-    gap: 1.6em;
-    color: var(--ink-2);
-  }
-
-  .work-arrow {
-    font-weight: 300;
-    opacity: 0;
-    transform: translateX(-0.4em);
-    transition:
-      opacity 0.4s ease,
-      transform 0.7s var(--ease-out);
-  }
-
-  /* 色を持つのは仮想側だけ：WebGL が使えないときも、画像は普段モノクロ */
-  .work-img > img {
-    filter: grayscale(1) contrast(1.05);
-    transition:
-      filter 0.8s ease,
-      transform 1.2s var(--ease-out);
-  }
-
-  @media (hover: hover) {
-    .work-link:hover .work-arrow {
-      opacity: 1;
-      transform: none;
-    }
-
-    .work-link:hover .work-img > img {
-      filter: none;
-    }
-  }
-
-  .upcoming {
-    margin-top: clamp(100px, 16vh, 180px);
-  }
-
-  .upcoming h3 {
-    font-weight: 500;
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--line-strong);
-  }
-
-  .upcoming li {
-    display: grid;
-    grid-template-columns: 2.4em minmax(0, 1fr) auto;
-    column-gap: 12px;
-    padding-block: 10px;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .upcoming-title {
+    align-items: center;
+    gap: 6px;
     color: var(--ink);
+  }
+
+  .work-state .s-after,
+  .work.is-on .work-state .s-before {
+    display: none;
+  }
+
+  .work.is-on .work-state .s-after {
+    display: inline;
+  }
+
+  .work-medium {
+    grid-column: 2 / -1;
+  }
+
+  .is-soon .work-title,
+  .is-soon .work-state {
+    color: var(--mute);
   }
 
   /* ============================== Contact ============================== */
@@ -637,13 +698,8 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
 
   /* ============================== Tablet ============================== */
   @media (max-width: 1100px) {
-    .work-text {
-      grid-column: 1 / span 4;
-    }
-
-    .work-img {
-      grid-column: 5 / -1;
-      aspect-ratio: 3 / 2;
+    .works-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .contact-title {
@@ -717,45 +773,17 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
       margin-top: 40px;
     }
 
-    /* 区切り線 → 番号・作品名 → 画像 → コピー の順に読ませる */
-    .work-link {
-      display: flex;
-      flex-direction: column;
+    .works-index {
+      grid-column: 1 / -1;
+      position: static;
+      padding: 0;
+      margin-bottom: 40px;
     }
 
-    .work-text {
-      display: contents;
-    }
-
-    .work-no {
-      order: 0;
-    }
-
-    .work-title {
-      order: 1;
-      margin-top: 6px;
-      font-size: 26px;
-    }
-
-    .work-sub {
-      order: 2;
-      margin-top: 4px;
-    }
-
-    .work-img {
-      order: 3;
-      margin-top: 18px;
-      aspect-ratio: 3 / 2;
-    }
-
-    .work-concept {
-      order: 4;
-      margin-top: 16px;
-    }
-
-    .work-foot {
-      order: 5;
-      padding-top: 12px;
+    .works-grid {
+      grid-column: 1 / -1;
+      grid-template-columns: 1fr;
+      row-gap: 48px;
     }
 
     .contact-side {

@@ -15,6 +15,10 @@ youtube: 9Kdja1OVgYo
 youtubeAspect: vertical
 cardFocus: "0.5 0.6"
 card: ../../../assets/images/works/05/05-02.jpg
+before: ../../../assets/images/works/kazasu/05-before.webp
+after: ../../../assets/images/works/kazasu/05-after.webp
+target: "45 67 20 18"
+medium: カード → PICO
 order: 5
 ---
 
