@@ -14,7 +14,6 @@ youtubeAspect: wide
 cardFocus: "0.42 0.5"
 before: ../../../assets/images/works/kazasu/06-before.webp
 after: ../../../assets/images/works/kazasu/06-after.webp
-target: "12 10 70 84"
 medium: 空間カード → Vision Pro
 order: 6
 ---

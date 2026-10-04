@@ -58,9 +58,6 @@ function createGlass(el: HTMLElement, intro: boolean): Glass | null {
       intro,
       mono: el.hasAttribute('data-mono'),
       after: el.dataset.after,
-      target: el.dataset.target
-        ? (el.dataset.target.split(/\s+/).map((v) => Number(v) / 100) as [number, number, number, number])
-        : undefined,
     });
   } catch (err) {
     console.warn('[glass] disabled:', err);
@@ -118,12 +115,23 @@ function initKazasu() {
   if (works.length === 0) return;
   const byId = new Map(works.map((w) => [w.dataset.work!, w]));
 
-  const set = (work: HTMLElement, on: boolean) => {
+  // カーソルが作品に入った／出た位置（要素に対する 0〜1、y は上が 1）。索引の行やスクロールのときは中央
+  const at = (work: HTMLElement, e?: PointerEvent): [number, number] => {
+    const img = work.querySelector<HTMLElement>('.work-img');
+    if (!img || !e) return [0.5, 0.5];
+    const r = img.getBoundingClientRect();
+    return [
+      gsap.utils.clamp(0, 1, (e.clientX - r.left) / r.width),
+      gsap.utils.clamp(0, 1, 1 - (e.clientY - r.top) / r.height),
+    ];
+  };
+
+  const set = (work: HTMLElement, on: boolean, from: [number, number] = [0.5, 0.5]) => {
     if (work.classList.contains('is-on') === on) return;
     work.classList.toggle('is-on', on);
     document.querySelector(`[data-ix="${work.dataset.work}"]`)?.classList.toggle('is-on', on);
     const img = work.querySelector<HTMLElement>('[data-glass]');
-    if (img) liveGlass.get(img)?.bloom(on);
+    if (img) liveGlass.get(img)?.bloom(on, from);
   };
 
   const pairs: Array<[HTMLElement, HTMLElement]> = [];
@@ -133,8 +141,8 @@ function initKazasu() {
     if (w) pairs.push([row, w]);
   });
   pairs.forEach(([trigger, work]) => {
-    const enter = (e: PointerEvent) => e.pointerType === 'mouse' && set(work, true);
-    const leave = (e: PointerEvent) => e.pointerType === 'mouse' && set(work, false);
+    const enter = (e: PointerEvent) => e.pointerType === 'mouse' && set(work, true, at(work, e));
+    const leave = (e: PointerEvent) => e.pointerType === 'mouse' && set(work, false, at(work, e));
     const focus = () => set(work, true);
     const blur = () => set(work, false);
     trigger.addEventListener('pointerenter', enter);

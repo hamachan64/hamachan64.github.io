@@ -18,7 +18,6 @@ card: ../../../assets/images/works/04/04-03.JPG
 cardFocus: "0.5 0.25"
 before: ../../../assets/images/works/kazasu/04-before.webp
 after: ../../../assets/images/works/kazasu/04-after.webp
-target: "49 77 24 23"
 medium: プリクラ → スマートフォン
 order: 4
 ---

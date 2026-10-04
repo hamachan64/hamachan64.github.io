@@ -9,6 +9,7 @@ import portraitTall from '../../assets/images/profile_t.jpg';
 
 const works = (await getCollection('works')).sort((a, b) => a.data.order - b.data.order);
 const released = works.filter((w) => !w.data.comingSoon);
+import { links } from '../lib/links';
 const pad = (n: number) => String(n).padStart(2, '0');
 
 // Works：作品ごとに「かざす前（物）」と「かざした後（端末越しの像）」を正方形で持つ
@@ -22,7 +23,7 @@ const items = await Promise.all(
     year: w.data.year,
     medium: w.data.medium,
     comingSoon: w.data.comingSoon,
-    target: w.data.target,
+    tags: (w.data.tech ?? '').split('/').map((t) => t.trim()).filter(Boolean),
     before: w.data.before ? await square(w.data.before) : undefined,
     after: w.data.after ? await square(w.data.after) : undefined,
   }))
@@ -40,8 +41,6 @@ const nameLines = ['Yuki', 'Hamaguchi'].map((w) =>
   [...w].map((c, i) => `<span class="ch" style="--c:${i}">${c}</span>`).join('')
 );
 
-const disciplines = ['AR / XR Experience', 'WebAR', 'Spatial Computing', 'Card & Game Design', 'Direction'];
-const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PICO'];
 ---
 
 <Base title="Yuki Hamaguchi — AR Card Creator / XR Engineer">
@@ -93,7 +92,7 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
 
       <p class="hero-meta label" data-fade data-manual style="--d: 840ms">
         Based in Tokyo<br />
-        <a href="#works" class="ul label-ink">Selected works <span class="num">01—{pad(released.length)}</span></a>
+        <a href="#works" class="ul label-ink">Works <span class="num">01—{pad(released.length)}</span></a>
       </p>
 
       <Lines as="h1" class="hero-name display by-char" lines={nameLines} manual delay={350} data-fit />
@@ -143,22 +142,12 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
         </div>
       </div>
 
-      <div class="grid about-lists">
-        <div>
-          <h3 class="label">Disciplines</h3>
-          <ul>{disciplines.map((d) => <li>{d}</li>)}</ul>
-        </div>
-        <div>
-          <h3 class="label">Tools</h3>
-          <ul>{tools.map((d) => <li>{d}</li>)}</ul>
-        </div>
-      </div>
     </section>
 
     <!-- ================================ WORKS =============================== -->
     <section id="works" class="works wrap">
       <header class="sec-head">
-        <h2 class="label label-ink">Selected Works</h2>
+        <h2 class="label label-ink">Works</h2>
         <span class="label num">2025—2026 · {pad(released.length)} projects</span>
       </header>
 
@@ -174,7 +163,6 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
                     <span class="num">{w.no}</span>
                     <span class="ix-title">{w.title}</span>
                     <span class="num ix-year">{w.comingSoon ? '制作中' : w.year}</span>
-                    <i class="mk" aria-hidden="true" />
                   </a>
                 </li>
               ))
@@ -194,7 +182,6 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
                       data-mono
                       data-src={w.before}
                       data-after={w.after}
-                      data-target={w.target}
                       data-clip
                       style={`--d:${(i % 3) * 90}ms`}
                     >
@@ -209,15 +196,17 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
                   <span class="work-cap">
                     <span class="label num work-no">{w.no}</span>
                     <span class="work-title">{w.title}</span>
-                    <span class="work-state label">
-                      <i class="mk" aria-hidden="true" />
-                      <span class="s-before">{w.comingSoon ? '制作中' : 'かざす前'}</span>
-                      <span class="s-after">かざした後</span>
-                    </span>
                     <span class="work-medium label">
                       {w.medium}
                       {w.year && <span class="num">　{w.year}</span>}
                     </span>
+                    {w.tags.length > 0 && (
+                      <ul class="work-tags">
+                        {w.tags.map((t) => (
+                          <li>{t}</li>
+                        ))}
+                      </ul>
+                    )}
                   </span>
                 </a>
               </li>
@@ -241,6 +230,17 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
             <span class="ul">yuuki.hama2186@gmail.com</span>
             <span class="contact-mail-arrow" aria-hidden="true">↗</span>
           </a>
+          <ul class="contact-links">
+            {
+              links.map((l) => (
+                <li>
+                  <a class="label label-ink ul" href={l.href} target="_blank" rel="noopener noreferrer">
+                    {l.label} ↗
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
         </div>
       </div>
     </section>
@@ -400,7 +400,13 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
   }
 
   .sec-head h2 {
+    font-size: 17px;
     font-weight: 500;
+    line-height: 1.4;
+  }
+
+  .sec-head .label {
+    font-size: 13px;
   }
 
   /* =============================== About =============================== */
@@ -451,32 +457,6 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
     max-width: 30em;
   }
 
-  .about-lists {
-    margin-top: clamp(80px, 12vh, 140px);
-  }
-
-  .about-lists > div {
-    grid-column: span 6;
-  }
-
-  .about-lists h3 {
-    padding-bottom: 10px;
-    border-bottom: 1px solid var(--line-strong);
-  }
-
-  .about-lists ul {
-    columns: 2;
-    column-gap: var(--gutter);
-  }
-
-  .about-lists li {
-    break-inside: avoid;
-    padding-block: 9px;
-    border-bottom: 1px solid var(--line);
-    font-size: 14px;
-    line-height: 1.5;
-  }
-
   /* =============================== Works =============================== */
   .works {
     padding-block: clamp(140px, 22vh, 240px) clamp(120px, 20vh, 200px);
@@ -521,7 +501,7 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
 
   .ix-row {
     display: grid;
-    grid-template-columns: 2.6em minmax(0, 1fr) auto 14px;
+    grid-template-columns: 2.6em minmax(0, 1fr) auto;
     align-items: baseline;
     column-gap: 10px;
     padding-block: 9px;
@@ -542,20 +522,6 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
 
   .ix-row.is-soon {
     color: var(--mute);
-  }
-
-  /* 状態マーカー：□ かざす前 → ■ かざした後（中間はない） */
-  .mk {
-    display: inline-block;
-    width: 9px;
-    height: 9px;
-    border: 1px solid currentColor;
-    align-self: center;
-  }
-
-  .is-on .mk,
-  .is-on > .mk {
-    background: currentColor;
   }
 
   .works-grid {
@@ -624,28 +590,27 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
     line-height: 1.4;
   }
 
-  .work-state {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    color: var(--ink);
-  }
-
-  .work-state .s-after,
-  .work.is-on .work-state .s-before {
-    display: none;
-  }
-
-  .work.is-on .work-state .s-after {
-    display: inline;
-  }
-
   .work-medium {
     grid-column: 2 / -1;
   }
 
-  .is-soon .work-title,
-  .is-soon .work-state {
+  .work-tags {
+    grid-column: 2 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+  }
+
+  .work-tags li {
+    padding: 1px 7px 2px;
+    border: 1px solid var(--line-strong);
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--ink-2);
+  }
+
+  .is-soon .work-title {
     color: var(--mute);
   }
 
@@ -686,6 +651,13 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
     font-size: clamp(18px, 1.7vw, 26px);
     font-weight: 500;
     letter-spacing: -0.01em;
+  }
+
+  .contact-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 22px;
+    margin-top: 28px;
   }
 
   .contact-mail-arrow {
@@ -763,14 +735,6 @@ const tools = ['Unity', 'Shader Graph', 'AR Foundation', 'Swift / visionOS', 'PI
     .about-en {
       grid-column: 1 / -1;
       padding: 0;
-    }
-
-    .about-lists > div {
-      grid-column: 1 / -1;
-    }
-
-    .about-lists > div + div {
-      margin-top: 40px;
     }
 
     .works-index {

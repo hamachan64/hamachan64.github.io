@@ -17,7 +17,6 @@ card: ../../../assets/images/works/01/01-03.jpg
 cardFocus: "0.5 0.55"
 before: ../../../assets/images/works/kazasu/01-before.webp
 after: ../../../assets/images/works/kazasu/01-after.webp
-target: "24.58 10 50.83 80"
 medium: 名刺 → スマートフォン
 order: 1
 ---
