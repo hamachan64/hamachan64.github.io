@@ -1,467 +1,228 @@
 ---
 import { getCollection } from 'astro:content';
-import { Image } from 'astro:assets';
+import { getImage } from 'astro:assets';
 import Base from '../layouts/Base.astro';
-import SectionTitle from '../components/SectionTitle.astro';
-import HoloCard from '../components/HoloCard.astro';
-import profile from '../../assets/images/profile.jpg';
+import Lines from '../components/Lines.astro';
+import WorksSection from '../components/WorksSection.astro';
+import AboutSection from '../components/AboutSection.astro';
+import ContactSection from '../components/ContactSection.astro';
+import portraitWide from '../../assets/images/profile.jpg';
+import portraitTall from '../../assets/images/profile_t.jpg';
 
-const works = (await getCollection('works')).sort(
-  (a, b) => a.data.order - b.data.order
+const released = (await getCollection('works')).filter((w) => !w.data.comingSoon);
+const pad = (n: number) => String(n).padStart(2, '0');
+
+// Hero：PC は横長、モバイルは縦長。どちらも本人と鏡像が向かい合う構図
+const wide = await getImage({ src: portraitWide, widths: [720, 1024], format: 'webp', quality: 86 });
+const tall = await getImage({ src: portraitTall, widths: [480, 682], format: 'webp', quality: 86 });
+// 継ぎ目（本人と鏡像の境）の位置。画像幅に対する割合
+const PORTRAIT_SEAM = 0.4902; // profile.jpg
+const PORTRAIT_SEAM_TALL = 0.4912; // profile_t.jpg
+
+// 名前は1文字ずつ立ち上げる
+const nameLines = ['Yuki', 'Hamaguchi'].map((w) =>
+  [...w].map((c, i) => `<span class="ch" style="--c:${i}">${c}</span>`).join('')
 );
-
-const skills = ['XR', 'Unity', 'Card Game', 'Immersive Design'];
 ---
 
-<Base title="Yuki Hamaguchi | XR Creator Portfolio">
-  <main>
-    <!-- ============================== HERO ============================== -->
-    <section id="hero" class="hero">
-      <canvas id="holo-particles" aria-hidden="true"></canvas>
+<Base title="Yuki Hamaguchi — AR Card Creator / XR Engineer">
+  <main id="top">
+    <section class="hero wrap" aria-label="Introduction">
+      <figure
+        class="hero-photo glass"
+        data-glass
+        data-src={wide.src}
+        data-seam={PORTRAIT_SEAM}
+        data-src-tall={tall.src}
+        data-seam-tall={PORTRAIT_SEAM_TALL}
+        data-focus="0.5 0.32"
+        data-clip
+        data-manual
+      >
+        <picture>
+          <source media="(max-width: 760px)" srcset={tall.srcSet.attribute} sizes="100vw" />
+          <img
+            src={wide.src}
+            srcset={wide.srcSet.attribute}
+            sizes="(max-width: 760px) 100vw, 75vw"
+            width="1024"
+            height="819"
+            alt="Yuki Hamaguchi のポートレート。ガラスに映った自分と向かい合っている"
+            fetchpriority="high"
+          />
+        </picture>
+        <figcaption class="hero-photo-caps" aria-hidden="true">
+          <span>Physical</span>
+          <span>Virtual</span>
+        </figcaption>
+      </figure>
 
-      <div class="container hero-inner">
-        <div class="hero-text">
-          <p class="kicker hero-kicker">XR ENGINEER / CREATOR — TOKYO</p>
-          <h1 class="hero-title font-head" data-split-hero>
-            Yuki<br />Hamaguchi
-          </h1>
-          <p class="hero-sub font-head text-holo" data-hero-fade>AR Card Creator</p>
-          <p class="hero-vision" data-hero-fade>
-            一枚のカードを入口に、現実と仮想が溶け合う<br
-              class="pc-only"
-            />イマーシブな体験をつくっています。
-          </p>
-        </div>
-
-        <div class="hero-card-wrap" data-hero-card>
-          <div class="hero-card holo-tilt">
-            <Image
-              src={profile}
-              alt="Yuki Hamaguchi のプロフィール写真"
-              width={640}
-              densities={[1, 2]}
-              loading="eager"
-            />
-            <span class="hero-card-sheen" aria-hidden="true"></span>
-            <span class="hero-card-label font-head">YUKI HAMAGUCHI — XR CREATOR</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="scroll-indicator font-head" aria-hidden="true">
-        <span>SCROLL</span>
-        <span class="scroll-line"></span>
-      </div>
-    </section>
-
-    <!-- ============================== ABOUT ============================== -->
-    <section id="about" class="section">
-      <div class="container">
-        <SectionTitle kicker="About" title="Creating Immersive Experiences" />
-        <div class="about-grid">
-          <div class="about-text" data-reveal>
-            <p>
-              XR Engineer / Creator based in Tokyo.
-            </p>
-            <p>
-              XR技術をコアに据え、『カード』をはじめとする物理メディアへ落とし込むことで、現実的で非日常なイマーシブ体験を創ることを志しています。
-            </p>
-            <p>
-              現実と仮想を融合させ、人々の心を動かす新しい価値を提供します。
-            </p>
-          </div>
-          <ul class="skills" data-reveal-group>
-            {
-              skills.map((s) => (
-                <li class="skill-chip font-head" data-reveal>
-                  {s}
-                </li>
-              ))
-            }
-          </ul>
-        </div>
-      </div>
-    </section>
-
-    <!-- ==================== VISION（ピン留めスクラブ） ==================== -->
-    <section id="vision" class="vision">
-      <div class="vision-pin">
-        <div class="container">
-          <p class="vision-line font-head" data-scrub-text>PHYSICAL × VIRTUAL</p>
-          <p class="vision-line vision-ja" data-scrub-text>一枚のカードから、</p>
-          <p class="vision-line vision-ja" data-scrub-text>世界が立ち上がる。</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============================== WORKS ============================== -->
-    <section id="works" class="section">
-      <div class="container">
-        <SectionTitle kicker="Works" title="Selected Works" />
-        <div class="works-grid" data-works-grid>
-          {
-            works.map((w) => (
-              <div class="works-item" data-work-card>
-                <HoloCard
-                  title={w.data.title}
-                  subtitle={w.data.subtitle}
-                  concept={w.data.comingSoon ? 'Coming soon...' : w.data.concept}
-                  cover={w.data.cover}
-                  href={w.data.comingSoon ? undefined : `/${w.id}`}
-                  transitionName={`work-${w.id}`}
-                />
-              </div>
-            ))
-          }
-          <div class="works-item" data-work-card>
-            <HoloCard title="Coming soon..." />
-          </div>
-          <div class="works-item" data-work-card>
-            <HoloCard title="Coming soon..." />
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============================= CONTACT ============================= -->
-    <section id="contact" class="section contact">
-      <div class="container">
-        <SectionTitle kicker="Contact" title="Let's Create Together" />
-        <p class="contact-lead" data-reveal>
-          制作のご相談・コラボレーションなど、お気軽にご連絡ください。
+      <div class="hero-left">
+        <p class="label" data-fade data-manual style="--d: 500ms">Portfolio 2025—2026</p>
+        <Lines
+          as="p"
+          class="hero-tagline jp"
+          lines={['XR技術と物理表現を', '手掛かりに、', '現実的で非日常な', 'イマーシブ体験を創る']}
+          delay={560}
+          manual
+        />
+        <p class="hero-en" data-fade data-manual style="--d: 760ms">
+          Creating immersive experiences — real, yet extraordinary — through XR technology and physical expression.
         </p>
-        <div class="contact-actions" data-reveal>
-          <a href="mailto:yuuki.hama2186@gmail.com" class="btn-holo">GET IN TOUCH</a>
-        </div>
-        <div class="social" data-reveal-group>
-          <a data-reveal href="https://x.com/hamaXR64" target="_blank" rel="noopener noreferrer">X (Twitter)</a>
-          <a data-reveal href="https://www.youtube.com/@Hamachan64" target="_blank" rel="noopener noreferrer">YouTube</a>
-          <a data-reveal href="https://github.com/hamachan64" target="_blank" rel="noopener noreferrer">GitHub</a>
-        </div>
       </div>
+
+      <p class="hero-meta label" data-fade data-manual style="--d: 840ms">
+        Based in Tokyo<br />
+        <a href="/works" class="ul label-ink">Works <span class="num">01—{pad(released.length)}</span></a>
+      </p>
+
+      <Lines as="h1" class="hero-name display by-char" lines={nameLines} manual delay={350} data-fit />
+
     </section>
+
+    <AboutSection />
+    <WorksSection />
+    <ContactSection />
   </main>
 </Base>
 
 <style>
-  /* ------------------------------ Hero ------------------------------ */
   .hero {
-    min-height: 100svh;
-    display: flex;
-    align-items: center;
     position: relative;
-    overflow: hidden;
-    padding-top: var(--header-h);
+    height: 100svh;
+    min-height: 640px;
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-template-rows: 1fr auto;
+    padding-bottom: clamp(16px, 2.5vh, 28px);
+    column-gap: var(--gutter);
+    padding-top: calc(var(--header-h) + 4px);
   }
 
-  #holo-particles {
+  /* 主役：本人と鏡像のポートレート */
+  .hero-photo {
+    grid-column: 4 / -1;
+    grid-row: 1 / span 2;
+    margin: 0;
+    background: #161615;
+  }
+
+  .hero-photo img {
+    object-position: 50% 32%;
+    filter: contrast(1.1) brightness(0.98);
+  }
+
+  .hero-photo-caps {
     position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
+    inset: 14px 16px auto;
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: rgba(235, 233, 228, 0.7);
     pointer-events: none;
   }
 
-  .hero-inner {
-    display: grid;
-    grid-template-columns: 1.15fr 0.85fr;
-    align-items: center;
-    gap: clamp(32px, 6vw, 80px);
-    width: 100%;
+  .hero-left {
+    grid-column: 1 / span 3;
+    grid-row: 1;
+    align-self: start;
+    padding-top: clamp(16px, 3vh, 32px);
+    padding-right: 8px;
   }
 
-  .hero-kicker {
-    margin-bottom: 22px;
+  .hero-left > .label:first-child {
+    margin-bottom: 18px;
   }
 
-  .hero-title {
-    font-size: clamp(3rem, 9vw, 6.2rem);
-    font-weight: 700;
-    line-height: 1.02;
-    letter-spacing: -0.01em;
-    margin-bottom: 24px;
-  }
-
-  .hero-sub {
-    font-size: clamp(1.05rem, 2.2vw, 1.4rem);
+  .hero-tagline {
+    font-family: var(--f-min);
     font-weight: 500;
-    letter-spacing: 0.2em;
-    margin-bottom: 20px;
+    font-size: clamp(18px, 1.6vw, 24px);
+    line-height: 1.6;
+    letter-spacing: 0.05em;
   }
 
-  .hero-vision {
-    color: var(--text-dim);
-    font-size: 0.95rem;
-    line-height: 2;
+  .hero-en {
+    margin-top: 14px;
+    color: var(--mute);
+    font-size: 13px;
+    line-height: 1.6;
   }
 
-  /* プロフィールを「ホロカード」として提示 */
-  .hero-card-wrap {
-    perspective: 1000px;
-    justify-self: center;
+  .hero-meta {
+    grid-column: 1 / span 3;
+    grid-row: 1;
+    align-self: end;
+    margin-bottom: clamp(20px, 3vh, 32px);
+    line-height: 1.7;
   }
 
-  .hero-card {
-    --rx: 0deg;
-    --ry: 0deg;
-    --mx: 50%;
-    --my: 50%;
+  .hero-name {
+    grid-column: 1 / -1;
+    grid-row: 2;
     position: relative;
-    width: min(340px, 70vw);
-    aspect-ratio: 63 / 88; /* トレカ比率 */
-    border-radius: 18px;
-    overflow: hidden;
-    transform: rotate(4deg) rotateX(var(--rx)) rotateY(var(--ry));
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    box-shadow:
-      0 30px 80px rgba(0, 0, 0, 0.55),
-      0 0 60px rgba(167, 139, 250, 0.12);
-    will-change: transform;
-  }
-
-  .hero-card :global(img) {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  .hero-card-sheen {
-    position: absolute;
-    inset: 0;
-    background:
-      radial-gradient(
-        460px circle at var(--mx) var(--my),
-        rgba(255, 255, 255, 0.22),
-        transparent 45%
-      ),
-      conic-gradient(
-        from 200deg at var(--mx) var(--my),
-        rgba(110, 231, 255, 0.25),
-        rgba(167, 139, 250, 0.25),
-        rgba(255, 139, 216, 0.25),
-        rgba(125, 255, 196, 0.25),
-        rgba(110, 231, 255, 0.25)
-      );
-    mix-blend-mode: color-dodge;
-    opacity: 0.5;
+    z-index: 2;
+    /* JS（data-fit）が左右マージンいっぱいに合わせる。これはその近似値 */
+    font-size: calc((100vw - var(--margin) * 2) / 6.4);
+    white-space: nowrap;
+    margin-left: -0.03em;
+    padding-bottom: 0.02em;
     pointer-events: none;
+    /* 写真の上では白、紙の上では墨になる */
+    color: #fff;
+    mix-blend-mode: difference;
   }
 
-  .hero-card-label {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    padding: 14px 16px;
-    font-size: 0.62rem;
-    letter-spacing: 0.28em;
-    color: rgba(255, 255, 255, 0.85);
-    background: linear-gradient(transparent, rgba(7, 7, 13, 0.85));
+  .hero-name :global(.line) {
+    display: inline-block;
+    vertical-align: top;
   }
 
-  .scroll-indicator {
-    position: absolute;
-    bottom: 28px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    font-size: 0.62rem;
-    letter-spacing: 0.4em;
-    color: var(--text-faint);
+  .hero-name :global(.line + .line) {
+    margin-left: 0.2em;
   }
 
-  .scroll-line {
-    width: 1px;
-    height: 44px;
-    background: linear-gradient(var(--holo-1), transparent);
-    animation: scrollPulse 2s var(--ease-out) infinite;
-  }
-
-  @keyframes scrollPulse {
-    0% {
-      transform: scaleY(0);
-      transform-origin: 0 0;
-    }
-    50% {
-      transform: scaleY(1);
-      transform-origin: 0 0;
-    }
-    51% {
-      transform-origin: 0 100%;
-    }
-    100% {
-      transform: scaleY(0);
-      transform-origin: 0 100%;
-    }
-  }
-
-  /* ------------------------------ About ------------------------------ */
-  .about-grid {
-    display: grid;
-    grid-template-columns: 1.4fr 1fr;
-    gap: clamp(32px, 6vw, 80px);
-    align-items: start;
-  }
-
-  .about-text p {
-    margin-bottom: 1.4em;
-    color: var(--text-dim);
-  }
-
-  .about-text p:first-child {
-    color: var(--text);
-    font-family: var(--font-head);
-    letter-spacing: 0.04em;
-  }
-
-  .skills {
-    list-style: none;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-
-  .skill-chip {
-    padding: 0.6em 1.4em;
-    font-size: 0.8rem;
-    font-weight: 500;
-    letter-spacing: 0.14em;
-    border-radius: 999px;
-    background: var(--surface);
-    border: 1px solid var(--line);
-    transition:
-      border-color var(--dur-fast) ease,
-      color var(--dur-fast) ease;
-  }
-
-  .skill-chip:hover {
-    border-color: var(--holo-2);
-    color: var(--holo-1);
-  }
-
-  /* ----------------------- Vision（ピン留め） ----------------------- */
-  .vision {
-    position: relative;
-  }
-
-  .vision-pin {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-  }
-
-  .vision-line {
-    font-size: clamp(1.9rem, 6.5vw, 4.6rem);
-    font-weight: 700;
-    line-height: 1.3;
-    letter-spacing: 0.02em;
-  }
-
-  .vision-line.vision-ja {
-    font-family: var(--font-body);
-    font-weight: 700;
-  }
-
-  /* スクラブ用：JSが文字単位に分割し .char の不透明度を制御 */
-  .vision-line :global(.char) {
-    opacity: 0.13;
-    transform: none;
-  }
-
-  /* ------------------------------ Works ------------------------------ */
-  .works-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: clamp(20px, 3vw, 32px);
-  }
-
-  :global(html.js) .works-item {
-    opacity: 0;
-    transform: translateY(60px) scale(0.96);
-    will-change: transform, opacity;
-  }
-
-  /* ----------------------------- Contact ----------------------------- */
-  .contact-lead {
-    color: var(--text-dim);
-    margin-bottom: 36px;
-    max-width: 40em;
-  }
-
-  .contact-actions {
-    margin-bottom: 48px;
-  }
-
-  .social {
-    display: flex;
-    gap: 28px;
-    flex-wrap: wrap;
-  }
-
-  .social a {
-    font-family: var(--font-head);
-    font-size: 0.85rem;
-    letter-spacing: 0.16em;
-    color: var(--text-dim);
-    border-bottom: 1px solid transparent;
-    padding-bottom: 3px;
-    transition:
-      color var(--dur-fast) ease,
-      border-color var(--dur-fast) ease;
-  }
-
-  .social a:hover {
-    color: var(--holo-1);
-    border-bottom-color: var(--holo-1);
-  }
-
-  /* --------------------------- Responsive --------------------------- */
-  @media (max-width: 860px) {
-    .hero-inner {
-      grid-template-columns: 1fr;
-      gap: 48px;
-      padding-block: 48px;
+  @media (max-width: 760px) {
+    .hero {
+      height: auto;
+      min-height: 100svh;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-rows: auto auto auto auto;
     }
 
-    .hero-card-wrap {
-      order: -1;
+    .hero-photo {
+      grid-column: 1 / -1;
+      grid-row: 1;
+      aspect-ratio: 682 / 1024;
+      max-height: 72svh;
+      width: 100%;
     }
 
-    .hero-card {
-      width: min(240px, 62vw);
+    .hero-name {
+      grid-row: 2;
+      margin-top: -0.62em;
+      font-size: calc((100vw - var(--margin) * 2) / 3.6);
+      line-height: 0.84;
     }
 
-    .about-grid {
-      grid-template-columns: 1fr;
+    .hero-name :global(.line) {
+      display: block;
     }
 
-    .works-grid {
-      grid-template-columns: 1fr;
+    .hero-name :global(.line + .line) {
+      margin-left: 0;
     }
 
-    .pc-only {
-      display: none;
-    }
-  }
-
-  @media (min-width: 861px) and (max-width: 1100px) {
-    .works-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-
-  /* Reduced motion: Works カードを即表示 */
-  @media (prefers-reduced-motion: reduce) {
-    .works-item {
-      opacity: 1;
-      transform: none;
+    .hero-left {
+      grid-column: 1 / -1;
+      grid-row: 3;
+      padding-block: 28px 20px;
     }
 
-    .scroll-line {
-      animation: none;
+    .hero-meta {
+      grid-column: 1 / -1;
+      grid-row: 4;
+      margin-bottom: 8px;
     }
   }
 </style>

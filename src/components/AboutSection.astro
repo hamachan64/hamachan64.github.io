@@ -1,0 +1,189 @@
+---
+import { getImage } from 'astro:assets';
+import Lines from './Lines.astro';
+import portrait from '../../assets/images/profile_t.jpg';
+
+interface Props {
+  standalone?: boolean;
+}
+const { standalone = false } = Astro.props;
+
+// 専用ページのみ：縦長のポートレート。継ぎ目（本人と鏡像の境）は画像幅の 49.12%
+const photo = standalone ? await getImage({ src: portrait, widths: [480, 682], format: 'webp', quality: 86 }) : null;
+---
+
+<section id="about" class:list={['about', 'wrap', { 'is-page': standalone }]}>
+  <header class="sec-head">
+    <h2 class="label label-ink">About</h2>
+    <span class="label">日本語 / English</span>
+  </header>
+
+  <div class="grid about-mirror">
+    {
+      photo && (
+        <figure class="about-photo glass" data-glass data-src={photo.src} data-seam="0.4912" data-focus="0.5 0.4" data-clip data-manual>
+          <img
+            src={photo.src}
+            srcset={photo.srcSet.attribute}
+            sizes="(max-width: 760px) 100vw, 33vw"
+            width="682"
+            height="1024"
+            alt="Yuki Hamaguchi のポートレート。ガラスに映った自分と向かい合っている"
+          />
+        </figure>
+      )
+    }
+    <div class="about-ja" lang="ja">
+      <Lines
+        as="p"
+        class="statement"
+        lines={['XR技術と物理表現を手掛かりに、', '現実的で非日常な', 'イマーシブ体験を創る']}
+      />
+      <div class="about-body jp">
+        <p>東京を拠点に活動する XR エンジニア／クリエイター。</p>
+        <p>
+          XR 技術をコアに据え、『カード』をはじめとする物理メディアへ落とし込むことで、現実的で非日常なイマーシブ体験を創ることを志しています。
+        </p>
+        <p>現実と仮想を融合させ、人々の心を動かす新しい価値を提供します。</p>
+      </div>
+    </div>
+
+    <div class="about-en" lang="en">
+      <Lines
+        as="p"
+        class="statement-en"
+        lines={['Creating immersive', 'experiences — real,', 'yet extraordinary —', 'through XR technology', 'and physical expression.']}
+        delay={160}
+      />
+      <div class="about-body">
+        <p>A Tokyo-based XR engineer and creator.</p>
+        <p>
+          With XR at the core, I translate experiences into physical media such as cards, creating immersive experiences that are real yet extraordinary.
+        </p>
+        <p>By fusing the real and the virtual, I aim to offer new value that moves people.</p>
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<style>
+  /* =============================== About =============================== */
+  .about {
+    padding-top: clamp(120px, 20vh, 220px);
+  }
+
+  .about-mirror {
+    row-gap: 64px;
+  }
+
+  .about-ja {
+    grid-column: 1 / span 6;
+    padding-right: clamp(0px, 3vw, 48px);
+  }
+
+  .about-en {
+    grid-column: 7 / span 6;
+    padding-left: clamp(0px, 1vw, 16px);
+  }
+
+  .statement-en {
+    font-family: var(--f-sans);
+    font-weight: 450;
+    font-size: clamp(26px, 3.1vw, 50px);
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+    /* 和文の行と高さをそろえる */
+    padding-top: 0.18em;
+  }
+
+  .about-ja .statement {
+    font-size: clamp(24px, 2.75vw, 44px);
+  }
+
+  .about-body {
+    margin-top: clamp(40px, 6vh, 64px);
+    max-width: 34em;
+    display: grid;
+    gap: 1.2em;
+    font-size: 15px;
+    line-height: 2;
+    color: var(--ink-2);
+  }
+
+  .about-en .about-body {
+    line-height: 1.75;
+    max-width: 30em;
+  }
+
+  @media (max-width: 760px) {
+    .about-ja,
+    .about-en {
+      grid-column: 1 / -1;
+      padding: 0;
+    }
+  }
+
+  /* 専用ページ：ヘッダーの下から始める */
+  .about.is-page {
+    padding-top: calc(var(--header-h) + 48px);
+  }
+
+  /* 専用ページ：左に写真、右に日本語と英語を並べる */
+  .about.is-page .about-photo {
+    grid-column: 1 / span 4;
+    grid-row: 1 / span 2;
+    margin: 0;
+    aspect-ratio: 682 / 1024;
+    position: sticky;
+    top: calc(var(--header-h) + 24px);
+    align-self: start;
+    background: #161615;
+  }
+
+  .about.is-page .about-ja {
+    grid-column: 5 / span 4;
+    grid-row: 1;
+    padding-right: 0;
+  }
+
+  .about.is-page .about-en {
+    grid-column: 9 / span 4;
+    grid-row: 1;
+    padding-left: 0;
+  }
+
+  .about.is-page .about-ja .statement {
+    font-size: clamp(20px, 2vw, 30px);
+  }
+
+  .about.is-page .statement-en {
+    font-size: clamp(20px, 2vw, 32px);
+  }
+
+  @media (max-width: 1100px) {
+    .about.is-page .about-photo {
+      grid-column: 1 / span 5;
+    }
+
+    .about.is-page .about-ja,
+    .about.is-page .about-en {
+      grid-column: 6 / -1;
+      grid-row: auto;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .about.is-page .about-photo,
+    .about.is-page .about-ja,
+    .about.is-page .about-en {
+      grid-column: 1 / -1;
+      grid-row: auto;
+    }
+
+    .about.is-page .about-photo {
+      position: relative;
+      top: auto;
+    }
+  }
+</style>

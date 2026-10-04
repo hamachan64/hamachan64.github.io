@@ -9,8 +9,12 @@
     "preview": "astro preview"
   },
   "dependencies": {
+    "@fontsource-variable/archivo": "^5.3.0",
+    "@fontsource/zen-kaku-gothic-new": "^5.3.0",
+    "@fontsource/zen-old-mincho": "^5.3.0",
     "astro": "^5.0.0",
     "gsap": "^3.12.5",
-    "lenis": "^1.1.14"
+    "lenis": "^1.1.14",
+    "ogl": "^1.0.11"
   }
 }

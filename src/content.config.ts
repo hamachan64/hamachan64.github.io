@@ -13,6 +13,12 @@ const works = defineCollection({
       tech: z.string().optional(),
       year: z.string().optional(),
       cover: image().optional(),
+      card: image().optional(), // 一覧と作品ページのビジュアルに使う画像。未指定なら cover
+      cardFocus: z.string().default('0.5 0.5'), // トリミングの焦点 "x y"（0〜1）
+      // 一覧の「かざす前／かざした後」（正方形）
+      before: image().optional(),
+      after: image().optional(),
+      medium: z.string().optional(), // 物 → 端末（例：名刺 → スマートフォン）
       gallery: z.array(image()).default([]),
       youtube: z.string().optional(), // YouTube 動画ID
       youtubeAspect: z.enum(['vertical', 'wide']).default('vertical'),

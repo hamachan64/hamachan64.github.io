@@ -13,6 +13,10 @@ gallery:
 # 下の youtube: に動画IDを設定してください（例: youtube: AbCdEfGhIjK）
 # youtube: ""
 youtubeAspect: vertical
+cardFocus: "0.5 0.45"
+before: ../../../assets/images/works/kazasu/02-before.webp
+after: ../../../assets/images/works/kazasu/02-after.webp
+medium: カセット型カード → タブレット
 order: 2
 ---
 
