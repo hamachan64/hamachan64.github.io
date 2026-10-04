@@ -14,6 +14,9 @@ gallery:
 # youtube: ""
 youtubeAspect: vertical
 cardFocus: "0.5 0.45"
+before: ../../../assets/images/works/kazasu/02-before.webp
+after: ../../../assets/images/works/kazasu/02-after.webp
+medium: カセット型カード → タブレット
 order: 2
 ---
 

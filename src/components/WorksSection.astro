@@ -1,0 +1,287 @@
+---
+import { getCollection } from 'astro:content';
+import { getImage } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+interface Props {
+  standalone?: boolean;
+}
+const { standalone = false } = Astro.props;
+
+const works = (await getCollection('works')).sort((a, b) => a.data.order - b.data.order);
+const released = works.filter((w) => !w.data.comingSoon);
+const pad = (n: number) => String(n).padStart(2, '0');
+
+// 作品ごとに「かざす前（物）」と「かざした後（端末越しの像）」を正方形で持つ
+const square = async (img: ImageMetadata) =>
+  (await getImage({ src: img, width: 960, height: 960, fit: 'cover', format: 'webp', quality: 82 })).src;
+const items = await Promise.all(
+  works.map(async (w) => ({
+    id: w.id,
+    no: pad(w.data.order),
+    title: w.data.title,
+    year: w.data.year,
+    medium: w.data.medium,
+    comingSoon: w.data.comingSoon,
+    tags: (w.data.tech ?? '').split('/').map((t) => t.trim()).filter(Boolean),
+    before: w.data.before ? await square(w.data.before) : undefined,
+    after: w.data.after ? await square(w.data.after) : undefined,
+  }))
+);
+---
+
+<section id="works" class:list={['works', 'wrap', { 'is-page': standalone }]}>
+  <header class="sec-head">
+    <h2 class="label label-ink">Works</h2>
+    <span class="label num">2025—2026 · {pad(released.length)} projects</span>
+  </header>
+
+  <div class="grid works-body">
+    <aside class="works-index">
+      <p class="works-lead jp">作品にカーソルをかざすと、<br />AR で見たときの姿に切り替わります。</p>
+      <p class="works-lead jp is-touch">画面の中央に来た作品は、<br />AR で見たときの姿に切り替わります。</p>
+      <ol>
+        {
+          items.map((w) => (
+            <li>
+              <a class:list={['ix-row', { 'is-soon': w.comingSoon }]} href={w.comingSoon ? undefined : `/${w.id}`} data-ix={w.id}>
+                <span class="num">{w.no}</span>
+                <span class="ix-title">{w.title}</span>
+                <span class="num ix-year">{w.comingSoon ? '制作中' : w.year}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+    </aside>
+
+    <ol class="works-grid">
+      {
+        items.map((w, i) => (
+          <li class:list={['work', { 'is-soon': w.comingSoon }]} data-work={w.id}>
+            <a class="work-link" href={w.comingSoon ? undefined : `/${w.id}`}>
+              {w.before ? (
+                <figure
+                  class="work-img glass"
+                  data-glass="lazy"
+                  data-mono
+                  data-src={w.before}
+                  data-after={w.after}
+                  data-clip
+                  style={`--d:${(i % 3) * 90}ms`}
+                >
+                  <img class="before" src={w.before} alt={`${w.title}：かざす前`} width="960" height="960" loading={i < 3 ? 'eager' : 'lazy'} />
+                  {w.after && <img class="after" src={w.after} alt={`${w.title}：かざした後`} width="960" height="960" loading="lazy" />}
+                </figure>
+              ) : (
+                <figure class="work-img work-empty" aria-hidden="true">
+                  <span class="label">未検出</span>
+                </figure>
+              )}
+              <span class="work-cap">
+                <span class="label num work-no">{w.no}</span>
+                <span class="work-title">{w.title}</span>
+                <span class="work-medium label">
+                  {w.medium}
+                  {w.year && <span class="num">　{w.year}</span>}
+                </span>
+                {w.tags.length > 0 && (
+                  <ul class="work-tags">
+                    {w.tags.map((t) => (
+                      <li>{t}</li>
+                    ))}
+                  </ul>
+                )}
+              </span>
+            </a>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</section>
+
+<style>
+  /* =============================== Works =============================== */
+  .works {
+    padding-block: clamp(140px, 22vh, 240px) clamp(120px, 20vh, 200px);
+  }
+
+  /* 左3列＝索引（Hero の文字の列と同じ幅）、右9列＝作品（Hero の写真と同じ左端） */
+  .works-body {
+    align-items: start;
+  }
+
+  .works-index {
+    grid-column: 1 / span 3;
+    position: sticky;
+    top: calc(var(--header-h) + 24px);
+    padding-right: 8px;
+  }
+
+  .works-lead {
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--mute);
+    margin-bottom: 28px;
+  }
+
+  .works-lead.is-touch {
+    display: none;
+  }
+
+  @media (hover: none) {
+    .works-lead {
+      display: none;
+    }
+
+    .works-lead.is-touch {
+      display: block;
+    }
+  }
+
+  .works-index ol {
+    border-top: 1px solid var(--line-strong);
+  }
+
+  .ix-row {
+    display: grid;
+    grid-template-columns: 2.6em minmax(0, 1fr) auto;
+    align-items: baseline;
+    column-gap: 10px;
+    padding-block: 9px;
+    border-bottom: 1px solid var(--line);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .ix-row .num {
+    font-size: 12px;
+    color: var(--mute);
+  }
+
+  .ix-row.is-on .num:first-child,
+  .ix-row.is-on .ix-title {
+    color: var(--ink);
+  }
+
+  .ix-row.is-soon {
+    color: var(--mute);
+  }
+
+  .works-grid {
+    grid-column: 4 / -1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: var(--gutter);
+    row-gap: clamp(40px, 6vh, 64px);
+  }
+
+  .work-link {
+    display: block;
+  }
+
+  .work-img {
+    margin: 0;
+    aspect-ratio: 1;
+    background: var(--paper-2);
+  }
+
+  /* WebGL が使えないとき：普段はモノクロ、かざすと色付きの「かざした後」に切り替わる */
+  .work-img > img {
+    position: absolute;
+    inset: 0;
+    filter: grayscale(1) contrast(1.05);
+    transition:
+      opacity 0.6s ease,
+      filter 0.8s ease;
+  }
+
+  .work-img > img.after {
+    opacity: 0;
+    filter: none;
+  }
+
+  .work.is-on .work-img > img.before {
+    filter: none;
+  }
+
+  .work.is-on .work-img > img.after {
+    opacity: 1;
+  }
+
+  .work-empty {
+    display: grid;
+    place-items: center;
+    background: none;
+    border: 1px dashed var(--line-strong);
+  }
+
+  .work-cap {
+    display: grid;
+    grid-template-columns: 2.4em minmax(0, 1fr) auto;
+    column-gap: 8px;
+    row-gap: 2px;
+    padding-top: 12px;
+  }
+
+  .work-no {
+    color: var(--ink);
+  }
+
+  .work-title {
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.4;
+  }
+
+  .work-medium {
+    grid-column: 2 / -1;
+  }
+
+  .work-tags {
+    grid-column: 2 / -1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+  }
+
+  .work-tags li {
+    padding: 1px 7px 2px;
+    border: 1px solid var(--line-strong);
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--ink-2);
+  }
+
+  .is-soon .work-title {
+    color: var(--mute);
+  }
+
+  @media (max-width: 1100px) {
+    .works-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 760px) {
+    .works-index {
+      grid-column: 1 / -1;
+      position: static;
+      padding: 0;
+      margin-bottom: 40px;
+    }
+
+    .works-grid {
+      grid-column: 1 / -1;
+      grid-template-columns: 1fr;
+      row-gap: 48px;
+    }
+  }
+
+  /* 専用ページ：ヘッダーの下から始める */
+  .works.is-page {
+    padding-top: calc(var(--header-h) + 48px);
+  }
+</style>

@@ -336,3 +336,26 @@ html.js [data-clip]:not(.is-in) img {
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+/* ==========================================================================
+   セクション見出し（Works / About / Contact 共通）
+   ========================================================================== */
+.sec-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--gutter);
+  padding-top: 12px;
+  border-top: 1px solid var(--line-strong);
+  margin-bottom: clamp(56px, 10vh, 120px);
+}
+
+.sec-head h2 {
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.sec-head .label {
+  font-size: 13px;
+}

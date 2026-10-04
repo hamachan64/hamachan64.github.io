@@ -12,6 +12,9 @@ gallery:
 youtube: 9oZq9TkVroQ
 youtubeAspect: wide
 cardFocus: "0.42 0.5"
+before: ../../../assets/images/works/kazasu/06-before.webp
+after: ../../../assets/images/works/kazasu/06-after.webp
+medium: 空間カード → Vision Pro
 order: 6
 ---
 

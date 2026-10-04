@@ -9,6 +9,8 @@ year: "2025"
 cover: ../../../assets/images/works/03/project03.png
 gallery:
   - ../../../assets/images/works/03/03-01.png
+before: ../../../assets/images/works/kazasu/03-before.webp
+medium: 街 → スマートフォン
 order: 3
 ---
 
