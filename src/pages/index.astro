@@ -1,33 +1,16 @@
 ---
 import { getCollection } from 'astro:content';
 import { getImage } from 'astro:assets';
-import type { ImageMetadata } from 'astro';
 import Base from '../layouts/Base.astro';
 import Lines from '../components/Lines.astro';
+import WorksSection from '../components/WorksSection.astro';
+import AboutSection from '../components/AboutSection.astro';
+import ContactSection from '../components/ContactSection.astro';
 import portraitWide from '../../assets/images/profile.jpg';
 import portraitTall from '../../assets/images/profile_t.jpg';
 
-const works = (await getCollection('works')).sort((a, b) => a.data.order - b.data.order);
-const released = works.filter((w) => !w.data.comingSoon);
-import { links } from '../lib/links';
+const released = (await getCollection('works')).filter((w) => !w.data.comingSoon);
 const pad = (n: number) => String(n).padStart(2, '0');
-
-// Works：作品ごとに「かざす前（物）」と「かざした後（端末越しの像）」を正方形で持つ
-const square = async (img: ImageMetadata) =>
-  (await getImage({ src: img, width: 960, height: 960, fit: 'cover', format: 'webp', quality: 82 })).src;
-const items = await Promise.all(
-  works.map(async (w) => ({
-    id: w.id,
-    no: pad(w.data.order),
-    title: w.data.title,
-    year: w.data.year,
-    medium: w.data.medium,
-    comingSoon: w.data.comingSoon,
-    tags: (w.data.tech ?? '').split('/').map((t) => t.trim()).filter(Boolean),
-    before: w.data.before ? await square(w.data.before) : undefined,
-    after: w.data.after ? await square(w.data.after) : undefined,
-  }))
-);
 
 // Hero：PC は横長、モバイルは縦長。どちらも本人と鏡像が向かい合う構図
 const wide = await getImage({ src: portraitWide, widths: [720, 1024], format: 'webp', quality: 86 });
@@ -40,12 +23,10 @@ const PORTRAIT_SEAM_TALL = 0.4912; // profile_t.jpg
 const nameLines = ['Yuki', 'Hamaguchi'].map((w) =>
   [...w].map((c, i) => `<span class="ch" style="--c:${i}">${c}</span>`).join('')
 );
-
 ---
 
 <Base title="Yuki Hamaguchi — AR Card Creator / XR Engineer">
   <main id="top">
-    <!-- ================================ HERO ================================ -->
     <section class="hero wrap" aria-label="Introduction">
       <figure
         class="hero-photo glass"
@@ -81,181 +62,39 @@ const nameLines = ['Yuki', 'Hamaguchi'].map((w) =>
         <Lines
           as="p"
           class="hero-tagline jp"
-          lines={['一枚のカードから、', '世界が立ち上がる。']}
+          lines={['XR技術と物理表現を', '手掛かりに、', '現実的で非日常な', 'イマーシブ体験を創る']}
           delay={560}
           manual
         />
         <p class="hero-en" data-fade data-manual style="--d: 760ms">
-          Immersive experiences that begin<br />with a single card in your hand.
+          Creating immersive experiences — real, yet extraordinary — through XR technology and physical expression.
         </p>
       </div>
 
       <p class="hero-meta label" data-fade data-manual style="--d: 840ms">
         Based in Tokyo<br />
-        <a href="#works" class="ul label-ink">Works <span class="num">01—{pad(released.length)}</span></a>
+        <a href="/works" class="ul label-ink">Works <span class="num">01—{pad(released.length)}</span></a>
       </p>
 
       <Lines as="h1" class="hero-name display by-char" lines={nameLines} manual delay={350} data-fit />
 
-      <p class="hero-scroll label" data-fade data-manual style="--d: 1100ms">
-        <a href="#about">Scroll</a>
-        <span class="hero-hint"><span class="hint-fine">Touch</span><span class="hint-touch">Tap</span> the reflection</span>
-        <span class="hero-scroll-arrow" aria-hidden="true">↓</span>
-      </p>
     </section>
 
-    <!-- ================================ ABOUT =============================== -->
-    <section id="about" class="about wrap">
-      <header class="sec-head">
-        <h2 class="label label-ink">About</h2>
-        <span class="label">日本語 / English</span>
-      </header>
-
-      <div class="grid about-mirror">
-        <div class="about-ja" lang="ja">
-          <Lines
-            as="p"
-            class="statement"
-            lines={['カードは、手のひらに収まる', 'いちばん小さな世界の入口。', 'XR の技術で、その向こう側を', 'つくっています。']}
-          />
-          <div class="about-body jp">
-            <p>
-              東京を拠点に活動する XR エンジニア／クリエイター。XR 技術をコアに据え、カードをはじめとする物理メディアへ体験を落とし込むことで、現実の延長線上にある非日常をデザインしています。
-            </p>
-            <p>触れられるものと、触れられないもの。その境界で人の心が動く瞬間をつくることが、私のテーマです。</p>
-          </div>
-        </div>
-
-        <div class="about-en" lang="en">
-          <Lines
-            as="p"
-            class="statement-en"
-            lines={['A card is the smallest', 'doorway to a world —', 'one that fits in your palm.', 'I build what lies beyond it.']}
-            delay={160}
-          />
-          <div class="about-body">
-            <p>
-              I'm a Tokyo-based XR engineer and creator. With XR at the core, I translate experiences into physical
-              media — cards above all — to design the extraordinary that sits just beyond everyday reality.
-            </p>
-          </div>
-        </div>
-      </div>
-
-    </section>
-
-    <!-- ================================ WORKS =============================== -->
-    <section id="works" class="works wrap">
-      <header class="sec-head">
-        <h2 class="label label-ink">Works</h2>
-        <span class="label num">2025—2026 · {pad(released.length)} projects</span>
-      </header>
-
-      <div class="grid works-body">
-        <aside class="works-index">
-          <p class="works-lead jp">作品にカーソルをかざすと、<br />AR で見たときの姿に切り替わります。</p>
-          <p class="works-lead jp is-touch">画面の中央に来た作品は、<br />AR で見たときの姿に切り替わります。</p>
-          <ol>
-            {
-              items.map((w) => (
-                <li>
-                  <a class:list={['ix-row', { 'is-soon': w.comingSoon }]} href={w.comingSoon ? undefined : `/${w.id}`} data-ix={w.id}>
-                    <span class="num">{w.no}</span>
-                    <span class="ix-title">{w.title}</span>
-                    <span class="num ix-year">{w.comingSoon ? '制作中' : w.year}</span>
-                  </a>
-                </li>
-              ))
-            }
-          </ol>
-        </aside>
-
-        <ol class="works-grid">
-          {
-            items.map((w, i) => (
-              <li class:list={['work', { 'is-soon': w.comingSoon }]} data-work={w.id}>
-                <a class="work-link" href={w.comingSoon ? undefined : `/${w.id}`}>
-                  {w.before ? (
-                    <figure
-                      class="work-img glass"
-                      data-glass="lazy"
-                      data-mono
-                      data-src={w.before}
-                      data-after={w.after}
-                      data-clip
-                      style={`--d:${(i % 3) * 90}ms`}
-                    >
-                      <img class="before" src={w.before} alt={`${w.title}：かざす前`} width="960" height="960" loading={i < 3 ? 'eager' : 'lazy'} />
-                      {w.after && <img class="after" src={w.after} alt={`${w.title}：かざした後`} width="960" height="960" loading="lazy" />}
-                    </figure>
-                  ) : (
-                    <figure class="work-img work-empty" aria-hidden="true">
-                      <span class="label">未検出</span>
-                    </figure>
-                  )}
-                  <span class="work-cap">
-                    <span class="label num work-no">{w.no}</span>
-                    <span class="work-title">{w.title}</span>
-                    <span class="work-medium label">
-                      {w.medium}
-                      {w.year && <span class="num">　{w.year}</span>}
-                    </span>
-                    {w.tags.length > 0 && (
-                      <ul class="work-tags">
-                        {w.tags.map((t) => (
-                          <li>{t}</li>
-                        ))}
-                      </ul>
-                    )}
-                  </span>
-                </a>
-              </li>
-            ))
-          }
-        </ol>
-      </div>
-    </section>
-
-    <!-- =============================== CONTACT ============================== -->
-    <section id="contact" class="contact wrap">
-      <header class="sec-head">
-        <h2 class="label label-ink">Contact</h2>
-        <span class="label">Available for collaborations</span>
-      </header>
-      <div class="grid contact-body">
-        <Lines as="p" class="contact-title" lines={['Have a card', 'in mind?']} />
-        <div class="contact-side">
-          <p class="jp contact-lead">制作のご相談・コラボレーションなど、お気軽にご連絡ください。</p>
-          <a class="contact-mail" href="mailto:yuuki.hama2186@gmail.com">
-            <span class="ul">yuuki.hama2186@gmail.com</span>
-            <span class="contact-mail-arrow" aria-hidden="true">↗</span>
-          </a>
-          <ul class="contact-links">
-            {
-              links.map((l) => (
-                <li>
-                  <a class="label label-ink ul" href={l.href} target="_blank" rel="noopener noreferrer">
-                    {l.label} ↗
-                  </a>
-                </li>
-              ))
-            }
-          </ul>
-        </div>
-      </div>
-    </section>
+    <AboutSection />
+    <WorksSection />
+    <ContactSection />
   </main>
 </Base>
 
 <style>
-  /* =============================== Hero =============================== */
   .hero {
     position: relative;
     height: 100svh;
     min-height: 640px;
     display: grid;
     grid-template-columns: repeat(12, minmax(0, 1fr));
-    grid-template-rows: 1fr auto auto;
+    grid-template-rows: 1fr auto;
+    padding-bottom: clamp(16px, 2.5vh, 28px);
     column-gap: var(--gutter);
     padding-top: calc(var(--header-h) + 4px);
   }
@@ -298,9 +137,9 @@ const nameLines = ['Yuki', 'Hamaguchi'].map((w) =>
   .hero-tagline {
     font-family: var(--f-min);
     font-weight: 500;
-    font-size: clamp(20px, 1.9vw, 28px);
-    line-height: 1.55;
-    letter-spacing: 0.06em;
+    font-size: clamp(18px, 1.6vw, 24px);
+    line-height: 1.6;
+    letter-spacing: 0.05em;
   }
 
   .hero-en {
@@ -343,353 +182,12 @@ const nameLines = ['Yuki', 'Hamaguchi'].map((w) =>
     margin-left: 0.2em;
   }
 
-  .hero-scroll {
-    grid-column: 1 / -1;
-    grid-row: 3;
-    display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    align-items: center;
-    padding-block: 14px 18px;
-    border-top: 1px solid var(--line-strong);
-    color: var(--ink);
-  }
-
-  .hero-hint {
-    color: var(--mute);
-  }
-
-  .hero-scroll-arrow {
-    justify-self: end;
-    animation: nudge 2.4s var(--ease) infinite;
-  }
-
-  @keyframes nudge {
-    0%,
-    60%,
-    100% {
-      transform: none;
-    }
-    30% {
-      transform: translateY(4px);
-    }
-  }
-
-  .hint-touch {
-    display: none;
-  }
-
-  @media (hover: none) {
-    .hint-fine {
-      display: none;
-    }
-
-    .hint-touch {
-      display: inline;
-    }
-  }
-
-  /* =============================== Shared =============================== */
-  .sec-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: var(--gutter);
-    padding-top: 12px;
-    border-top: 1px solid var(--line-strong);
-    margin-bottom: clamp(56px, 10vh, 120px);
-  }
-
-  .sec-head h2 {
-    font-size: 17px;
-    font-weight: 500;
-    line-height: 1.4;
-  }
-
-  .sec-head .label {
-    font-size: 13px;
-  }
-
-  /* =============================== About =============================== */
-  .about {
-    padding-top: clamp(120px, 20vh, 220px);
-  }
-
-  .about-mirror {
-    row-gap: 64px;
-  }
-
-  .about-ja {
-    grid-column: 1 / span 6;
-    padding-right: clamp(0px, 3vw, 48px);
-  }
-
-  .about-en {
-    grid-column: 7 / span 6;
-    padding-left: clamp(0px, 1vw, 16px);
-  }
-
-  .statement-en {
-    font-family: var(--f-sans);
-    font-weight: 450;
-    font-size: clamp(26px, 3.1vw, 50px);
-    line-height: 1.2;
-    letter-spacing: -0.025em;
-    /* 和文の行と高さをそろえる */
-    padding-top: 0.18em;
-  }
-
-  .about-ja .statement {
-    font-size: clamp(24px, 2.75vw, 44px);
-  }
-
-  .about-body {
-    margin-top: clamp(40px, 6vh, 64px);
-    max-width: 34em;
-    display: grid;
-    gap: 1.2em;
-    font-size: 15px;
-    line-height: 2;
-    color: var(--ink-2);
-  }
-
-  .about-en .about-body {
-    line-height: 1.75;
-    max-width: 30em;
-  }
-
-  /* =============================== Works =============================== */
-  .works {
-    padding-block: clamp(140px, 22vh, 240px) clamp(120px, 20vh, 200px);
-  }
-
-  /* 左3列＝索引（Hero の文字の列と同じ幅）、右9列＝作品（Hero の写真と同じ左端） */
-  .works-body {
-    align-items: start;
-  }
-
-  .works-index {
-    grid-column: 1 / span 3;
-    position: sticky;
-    top: calc(var(--header-h) + 24px);
-    padding-right: 8px;
-  }
-
-  .works-lead {
-    font-size: 13px;
-    line-height: 1.8;
-    color: var(--mute);
-    margin-bottom: 28px;
-  }
-
-  .works-lead.is-touch {
-    display: none;
-  }
-
-  @media (hover: none) {
-    .works-lead {
-      display: none;
-    }
-
-    .works-lead.is-touch {
-      display: block;
-    }
-  }
-
-  .works-index ol {
-    border-top: 1px solid var(--line-strong);
-  }
-
-  .ix-row {
-    display: grid;
-    grid-template-columns: 2.6em minmax(0, 1fr) auto;
-    align-items: baseline;
-    column-gap: 10px;
-    padding-block: 9px;
-    border-bottom: 1px solid var(--line);
-    font-size: 14px;
-    line-height: 1.5;
-  }
-
-  .ix-row .num {
-    font-size: 12px;
-    color: var(--mute);
-  }
-
-  .ix-row.is-on .num:first-child,
-  .ix-row.is-on .ix-title {
-    color: var(--ink);
-  }
-
-  .ix-row.is-soon {
-    color: var(--mute);
-  }
-
-  .works-grid {
-    grid-column: 4 / -1;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    column-gap: var(--gutter);
-    row-gap: clamp(40px, 6vh, 64px);
-  }
-
-  .work-link {
-    display: block;
-  }
-
-  .work-img {
-    margin: 0;
-    aspect-ratio: 1;
-    background: var(--paper-2);
-  }
-
-  /* WebGL が使えないとき：普段はモノクロ、かざすと色付きの「かざした後」に切り替わる */
-  .work-img > img {
-    position: absolute;
-    inset: 0;
-    filter: grayscale(1) contrast(1.05);
-    transition:
-      opacity 0.6s ease,
-      filter 0.8s ease;
-  }
-
-  .work-img > img.after {
-    opacity: 0;
-    filter: none;
-  }
-
-  .work.is-on .work-img > img.before {
-    filter: none;
-  }
-
-  .work.is-on .work-img > img.after {
-    opacity: 1;
-  }
-
-  .work-empty {
-    display: grid;
-    place-items: center;
-    background: none;
-    border: 1px dashed var(--line-strong);
-  }
-
-  .work-cap {
-    display: grid;
-    grid-template-columns: 2.4em minmax(0, 1fr) auto;
-    column-gap: 8px;
-    row-gap: 2px;
-    padding-top: 12px;
-  }
-
-  .work-no {
-    color: var(--ink);
-  }
-
-  .work-title {
-    font-size: 15px;
-    font-weight: 500;
-    line-height: 1.4;
-  }
-
-  .work-medium {
-    grid-column: 2 / -1;
-  }
-
-  .work-tags {
-    grid-column: 2 / -1;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    margin-top: 6px;
-  }
-
-  .work-tags li {
-    padding: 1px 7px 2px;
-    border: 1px solid var(--line-strong);
-    font-size: 11px;
-    line-height: 1.6;
-    color: var(--ink-2);
-  }
-
-  .is-soon .work-title {
-    color: var(--mute);
-  }
-
-  /* ============================== Contact ============================== */
-  .contact {
-    padding-bottom: clamp(100px, 16vh, 180px);
-  }
-
-  .contact-body {
-    align-items: end;
-    row-gap: 48px;
-  }
-
-  .contact-title {
-    grid-column: 1 / span 8;
-    font-family: var(--f-sans);
-    font-weight: 500;
-    font-size: clamp(56px, 9.4vw, 168px);
-    line-height: 0.94;
-    letter-spacing: -0.045em;
-  }
-
-  .contact-side {
-    grid-column: 9 / -1;
-    padding-bottom: 0.6em;
-  }
-
-  .contact-lead {
-    font-size: 14px;
-    color: var(--ink-2);
-  }
-
-  .contact-mail {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 0.3em;
-    margin-top: 16px;
-    font-size: clamp(18px, 1.7vw, 26px);
-    font-weight: 500;
-    letter-spacing: -0.01em;
-  }
-
-  .contact-links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px 22px;
-    margin-top: 28px;
-  }
-
-  .contact-mail-arrow {
-    transition: transform 0.6s var(--ease-out);
-  }
-
-  .contact-mail:hover .contact-mail-arrow {
-    transform: translate(0.12em, -0.12em);
-  }
-
-  /* ============================== Tablet ============================== */
-  @media (max-width: 1100px) {
-    .works-grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    .contact-title {
-      grid-column: 1 / -1;
-    }
-
-    .contact-side {
-      grid-column: 1 / span 8;
-    }
-  }
-
-  /* ============================== Mobile ============================== */
   @media (max-width: 760px) {
     .hero {
       height: auto;
       min-height: 100svh;
       grid-template-columns: repeat(4, minmax(0, 1fr));
-      grid-template-rows: auto auto auto auto auto;
+      grid-template-rows: auto auto auto auto;
     }
 
     .hero-photo {
@@ -724,34 +222,7 @@ const nameLines = ['Yuki', 'Hamaguchi'].map((w) =>
     .hero-meta {
       grid-column: 1 / -1;
       grid-row: 4;
-      margin-bottom: 28px;
-    }
-
-    .hero-scroll {
-      grid-row: 5;
-    }
-
-    .about-ja,
-    .about-en {
-      grid-column: 1 / -1;
-      padding: 0;
-    }
-
-    .works-index {
-      grid-column: 1 / -1;
-      position: static;
-      padding: 0;
-      margin-bottom: 40px;
-    }
-
-    .works-grid {
-      grid-column: 1 / -1;
-      grid-template-columns: 1fr;
-      row-gap: 48px;
-    }
-
-    .contact-side {
-      grid-column: 1 / -1;
+      margin-bottom: 8px;
     }
   }
 </style>

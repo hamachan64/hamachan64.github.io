@@ -174,22 +174,16 @@ function initKazasu() {
 }
 
 /* ==========================================================================
-   ヘッダー：下へスクロール中は隠し、戻ると出す
+   ヘッダー：いまのページに印を付ける（ヘッダーは遷移をまたいで残るため、毎回更新する）
    ========================================================================== */
-const header = document.querySelector<HTMLElement>('.header');
-let lastY = window.scrollY;
-window.addEventListener(
-  'scroll',
-  () => {
-    const y = window.scrollY;
-    if (header) {
-      if (y > 160 && y > lastY + 4) header.classList.add('is-hidden');
-      else if (y < lastY - 4 || y <= 160) header.classList.remove('is-hidden');
-    }
-    lastY = y;
-  },
-  { passive: true }
-);
+function markCurrentNav() {
+  const path = location.pathname.replace(/\/$/, '') || '/';
+  document.querySelectorAll<HTMLAnchorElement>('.nav-link').forEach((a) => {
+    const here = new URL(a.href).pathname.replace(/\/$/, '').replace(/\.html$/, '');
+    if (here === path.replace(/\.html$/, '')) a.setAttribute('aria-current', 'page');
+    else a.removeAttribute('aria-current');
+  });
+}
 
 /* ==========================================================================
    リビール（IntersectionObserver で .is-in を付与するだけ。動きは CSS）
@@ -275,6 +269,7 @@ function initFilms() {
    ページのライフサイクル
    ========================================================================== */
 document.addEventListener('astro:page-load', () => {
+  markCurrentNav();
   initGlass();
   initKazasu();
   initFit();
