@@ -1,10 +1,15 @@
 ---
+import { getImage } from 'astro:assets';
 import Lines from './Lines.astro';
+import portrait from '../../assets/images/profile_t.jpg';
 
 interface Props {
   standalone?: boolean;
 }
 const { standalone = false } = Astro.props;
+
+// 専用ページのみ：縦長のポートレート。継ぎ目（本人と鏡像の境）は画像幅の 49.12%
+const photo = standalone ? await getImage({ src: portrait, widths: [480, 682], format: 'webp', quality: 86 }) : null;
 ---
 
 <section id="about" class:list={['about', 'wrap', { 'is-page': standalone }]}>
@@ -14,6 +19,20 @@ const { standalone = false } = Astro.props;
   </header>
 
   <div class="grid about-mirror">
+    {
+      photo && (
+        <figure class="about-photo glass" data-glass data-src={photo.src} data-seam="0.4912" data-focus="0.5 0.4" data-clip data-manual>
+          <img
+            src={photo.src}
+            srcset={photo.srcSet.attribute}
+            sizes="(max-width: 760px) 100vw, 33vw"
+            width="682"
+            height="1024"
+            alt="Yuki Hamaguchi のポートレート。ガラスに映った自分と向かい合っている"
+          />
+        </figure>
+      )
+    }
     <div class="about-ja" lang="ja">
       <Lines
         as="p"
@@ -108,5 +127,63 @@ const { standalone = false } = Astro.props;
   /* 専用ページ：ヘッダーの下から始める */
   .about.is-page {
     padding-top: calc(var(--header-h) + 48px);
+  }
+
+  /* 専用ページ：左に写真、右に日本語と英語を並べる */
+  .about.is-page .about-photo {
+    grid-column: 1 / span 4;
+    grid-row: 1 / span 2;
+    margin: 0;
+    aspect-ratio: 682 / 1024;
+    position: sticky;
+    top: calc(var(--header-h) + 24px);
+    align-self: start;
+    background: #161615;
+  }
+
+  .about.is-page .about-ja {
+    grid-column: 5 / span 4;
+    grid-row: 1;
+    padding-right: 0;
+  }
+
+  .about.is-page .about-en {
+    grid-column: 9 / span 4;
+    grid-row: 1;
+    padding-left: 0;
+  }
+
+  .about.is-page .about-ja .statement {
+    font-size: clamp(20px, 2vw, 30px);
+  }
+
+  .about.is-page .statement-en {
+    font-size: clamp(20px, 2vw, 32px);
+  }
+
+  @media (max-width: 1100px) {
+    .about.is-page .about-photo {
+      grid-column: 1 / span 5;
+    }
+
+    .about.is-page .about-ja,
+    .about.is-page .about-en {
+      grid-column: 6 / -1;
+      grid-row: auto;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .about.is-page .about-photo,
+    .about.is-page .about-ja,
+    .about.is-page .about-en {
+      grid-column: 1 / -1;
+      grid-row: auto;
+    }
+
+    .about.is-page .about-photo {
+      position: relative;
+      top: auto;
+    }
   }
 </style>
