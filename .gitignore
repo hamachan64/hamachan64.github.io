@@ -8,6 +8,11 @@ node_modules/
 # macOS
 .DS_Store
 
+# Claude Code（worktree・個人設定はコミットしない）
+.claude/worktrees/
+.claude/settings.local.json
+.playwright-mcp/
+
 # env
 .env
 .env.production
