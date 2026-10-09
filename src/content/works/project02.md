@@ -17,6 +17,11 @@ cardFocus: "0.5 0.45"
 before: ../../../assets/images/works/kazasu/02-before.webp
 after: ../../../assets/images/works/kazasu/02-after.webp
 medium: カセット型カード → タブレット
+achievements:
+  - date: "2025.12"
+    title: 結婚式withARハッカソン powered by NEUU 第3位
+    kind: 受賞
+    url: https://withar.connpass.com/event/373916/
 order: 2
 ---
 

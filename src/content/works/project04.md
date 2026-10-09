@@ -19,6 +19,11 @@ cardFocus: "0.5 0.25"
 before: ../../../assets/images/works/kazasu/04-before.webp
 after: ../../../assets/images/works/kazasu/04-after.webp
 medium: プリクラ → スマートフォン
+achievements:
+  - date: "2026.03"
+    title: XRグループ展「中庭」（Pot Gallery）
+    kind: 展示
+    url: https://www.moguravr.com/xr-exhibition-nakaniwa-2026/
 order: 4
 ---
 

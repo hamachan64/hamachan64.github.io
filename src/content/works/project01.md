@@ -18,6 +18,11 @@ cardFocus: "0.5 0.55"
 before: ../../../assets/images/works/kazasu/01-before.webp
 after: ../../../assets/images/works/kazasu/01-after.webp
 medium: 名刺 → スマートフォン
+achievements:
+  - date: "2025.12"
+    title: XR Kaigi 2025 展示
+    kind: 展示
+    url: https://www.xrkaigi.com/event/9316
 order: 1
 ---
 
