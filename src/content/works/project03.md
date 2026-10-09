@@ -11,6 +11,10 @@ gallery:
   - ../../../assets/images/works/03/03-01.png
 before: ../../../assets/images/works/kazasu/03-before.webp
 medium: 街 → スマートフォン
+achievements:
+  - date: "2025"
+    title: TOKYO NODE XR HACKATHON 参加
+    kind: 参加
 order: 3
 ---
 
