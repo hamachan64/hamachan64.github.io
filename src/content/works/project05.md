@@ -18,6 +18,11 @@ card: ../../../assets/images/works/05/05-02.jpg
 before: ../../../assets/images/works/kazasu/05-before.webp
 after: ../../../assets/images/works/kazasu/05-after.webp
 medium: カード → PICO
+achievements:
+  - date: "2026.04"
+    title: LBE VR開発ワークショップ（イワケンラボ）にて制作
+    kind: ワークショップ
+    url: https://note.com/iwaken71/n/n057ccfe8acfb
 order: 5
 ---
 

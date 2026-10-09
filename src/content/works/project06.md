@@ -9,6 +9,7 @@ year: "2026"
 cover: ../../../assets/images/works/06/06-01.jpg
 gallery:
   - ../../../assets/images/works/06/06-01.jpg
+  - ../../../assets/images/works/06/06-02.png
 youtube: 9oZq9TkVroQ
 youtubeAspect: wide
 cardFocus: "0.42 0.5"

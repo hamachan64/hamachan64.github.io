@@ -6,7 +6,7 @@ const works = defineCollection({
   schema: ({ image }) =>
     z.object({
       title: z.string(),
-      subtitle: z.string(), // 英語タイトル
+      subtitle: z.string().nullish().transform((v) => v ?? ''), // 英語タイトル（空でも可）
       concept: z.string().optional(), // 日本語コンセプト（カード・詳細見出しに使用）
       conceptEn: z.string().optional(),
       role: z.string().optional(),
@@ -22,6 +22,17 @@ const works = defineCollection({
       gallery: z.array(image()).default([]),
       youtube: z.string().optional(), // YouTube 動画ID
       youtubeAspect: z.enum(['vertical', 'wide']).default('vertical'),
+      // 受賞・展示・掲載などの実績（新しい順に書く）
+      achievements: z
+        .array(
+          z.object({
+            date: z.string(), // 例: "2026.05"
+            title: z.string(),
+            kind: z.string().optional(), // 例: 展示 / 受賞 / 掲載
+            url: z.string().url().optional(), // イベントページ等
+          })
+        )
+        .default([]),
       comingSoon: z.boolean().default(false),
       order: z.number(),
     }),

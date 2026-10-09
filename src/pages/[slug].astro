@@ -29,7 +29,7 @@ const meta = [
 ].filter((m) => m.v);
 ---
 
-<Base title={`${data.title} — ${data.subtitle} | Yuki Hamaguchi`} description={data.concept ?? `${data.subtitle} by Yuki Hamaguchi`}>
+<Base title={`${data.title}${data.subtitle ? ` — ${data.subtitle}` : ''} | Yuki Hamaguchi`} description={data.concept ?? `${data.title} by Yuki Hamaguchi`}>
   <main id="top" class="detail">
     <!-- ================================ HERO ================================ -->
     <section class="d-hero wrap grid">
@@ -104,6 +104,27 @@ const meta = [
               <Content />
             </div>
           </section>
+
+          {data.achievements.length > 0 && (
+            <section class="wrap grid d-block">
+              <p class="d-label label" data-fade>Achievements</p>
+              <ul class="d-col d-ach" data-fade>
+                {data.achievements.map((a) => (
+                  <li>
+                    <span class="num">{a.date}</span>
+                    {a.url ? (
+                      <a class="jp d-ach-link" href={a.url} target="_blank" rel="noopener noreferrer">
+                        {a.title} <span aria-hidden="true">↗</span>
+                      </a>
+                    ) : (
+                      <span class="jp">{a.title}</span>
+                    )}
+                    {a.kind && <span class="label">{a.kind}</span>}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           {data.youtube && (
             <section class="wrap grid d-block">
@@ -277,6 +298,25 @@ const meta = [
     color: var(--ink-2);
   }
 
+  .d-ach {
+    border-top: 1px solid var(--line-strong);
+  }
+
+  .d-ach li {
+    display: grid;
+    grid-template-columns: 6em minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: var(--gutter);
+    padding-block: 14px;
+    border-bottom: 1px solid var(--line);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  .d-ach-link:hover {
+    color: var(--mute);
+  }
+
   .d-film.is-vertical {
     grid-column: 4 / span 4;
   }
@@ -411,6 +451,14 @@ const meta = [
 
     .d-film.is-vertical {
       grid-column: 1 / span 3;
+    }
+
+    .d-ach li {
+      grid-template-columns: 5em 1fr;
+    }
+
+    .d-ach li .label {
+      grid-column: 2;
     }
 
     .g-0,
