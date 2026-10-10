@@ -5,6 +5,7 @@ import Base from '../layouts/Base.astro';
 import Lines from '../components/Lines.astro';
 import Film from '../components/Film.astro';
 import { previewSrc } from '../lib/images';
+import { ogImage } from '../lib/ogp';
 
 export async function getStaticPaths() {
   const works = (await getCollection('works')).sort((a, b) => a.data.order - b.data.order);
@@ -22,6 +23,9 @@ const { Content } = await render(work);
 const no = String(data.order).padStart(2, '0');
 const cardImg = data.card ?? data.cover;
 const src = cardImg ? await previewSrc(cardImg) : undefined;
+const achievements = await Promise.all(
+  data.achievements.map(async (a) => ({ ...a, thumb: (a.url && (await ogImage(a.url))) || a.image })),
+);
 const meta = [
   { k: 'Role', v: data.role },
   { k: 'Tech', v: data.tech },
@@ -105,23 +109,43 @@ const meta = [
             </div>
           </section>
 
-          {data.achievements.length > 0 && (
+          {achievements.length > 0 && (
             <section class="wrap grid d-block">
               <p class="d-label label" data-fade>Achievements</p>
               <ul class="d-col d-ach" data-fade>
-                {data.achievements.map((a) => (
-                  <li>
-                    <span class="num">{a.date}</span>
-                    {a.url ? (
-                      <a class="jp d-ach-link" href={a.url} target="_blank" rel="noopener noreferrer">
-                        {a.title} <span aria-hidden="true">↗</span>
-                      </a>
-                    ) : (
-                      <span class="jp">{a.title}</span>
-                    )}
-                    {a.kind && <span class="label">{a.kind}</span>}
-                  </li>
-                ))}
+                {achievements.map((a) => {
+                  const body = (
+                    <>
+                      <span class="num d-ach-date">{a.date}</span>
+                      {a.thumb && (
+                        <span class="d-ach-img">
+                          {typeof a.thumb === 'string' ? (
+                            <Image src={a.thumb} alt="" width={240} height={150} inferSize loading="lazy" />
+                          ) : (
+                            <Image src={a.thumb} alt="" width={240} loading="lazy" />
+                          )}
+                        </span>
+                      )}
+                      <span class="d-ach-text">
+                        <span class="jp d-ach-title">{a.title}</span>
+                        <span class="label">
+                          {[a.kind, a.url && `${new URL(a.url).hostname.replace(/^www\./, '')} ↗`].filter(Boolean).join(' · ')}
+                        </span>
+                      </span>
+                    </>
+                  );
+                  return (
+                    <li>
+                      {a.url ? (
+                        <a class="d-ach-row is-link" href={a.url} target="_blank" rel="noopener noreferrer">
+                          {body}
+                        </a>
+                      ) : (
+                        <div class="d-ach-row">{body}</div>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </section>
           )}
@@ -303,18 +327,49 @@ const meta = [
   }
 
   .d-ach li {
-    display: grid;
-    grid-template-columns: 6em minmax(0, 1fr) auto;
-    align-items: baseline;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .d-ach-row {
+    display: flex;
+    align-items: center;
     gap: var(--gutter);
     padding-block: 14px;
-    border-bottom: 1px solid var(--line);
     font-size: 15px;
     line-height: 1.7;
   }
 
-  .d-ach-link:hover {
-    color: var(--mute);
+  .d-ach-row.is-link {
+    transition: opacity 0.4s var(--ease-out);
+  }
+
+  .d-ach-row.is-link:hover {
+    opacity: 0.6;
+  }
+
+  .d-ach-date {
+    flex: none;
+    width: 5em;
+  }
+
+  .d-ach-img {
+    flex: none;
+    width: 120px;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    background: var(--paper-2);
+  }
+
+  .d-ach-img :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .d-ach-text {
+    display: grid;
+    gap: 4px;
+    min-width: 0;
   }
 
   .d-film.is-vertical {
@@ -453,12 +508,13 @@ const meta = [
       grid-column: 1 / span 3;
     }
 
-    .d-ach li {
-      grid-template-columns: 5em 1fr;
+    .d-ach-row {
+      flex-wrap: wrap;
+      gap: 8px 16px;
     }
 
-    .d-ach li .label {
-      grid-column: 2;
+    .d-ach-img {
+      width: 96px;
     }
 
     .g-0,
