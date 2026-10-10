@@ -29,7 +29,8 @@ const works = defineCollection({
             date: z.string(), // 例: "2026.05"
             title: z.string(),
             kind: z.string().optional(), // 例: 展示 / 受賞 / 掲載
-            url: z.string().url().optional(), // イベントページ等
+            url: z.string().url().optional(), // イベントページ・記事など。あればリンク先の OGP 画像をサムネイルにする
+            image: image().optional(), // OGP が取れないときの手動サムネイル。なければ文字だけ
           })
         )
         .default([]),

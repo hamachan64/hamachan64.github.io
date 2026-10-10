@@ -21,6 +21,7 @@ achievements:
   - date: "2026.09"
     title: NoMaps 2026（札幌）
     kind: 展示
+    url: https://no-maps.jp
 order: 9
 ---
 

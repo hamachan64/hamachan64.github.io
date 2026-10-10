@@ -22,7 +22,7 @@ achievements:
   - date: "2025.12"
     title: XR Kaigi 2025 展示
     kind: 展示
-    url: https://www.xrkaigi.com/event/9316
+    url: https://xrkaigi.com/
 order: 1
 ---
 
