@@ -28,11 +28,14 @@ const achievements = await Promise.all(
   data.achievements.map(async (a) => ({ ...a, thumb: (a.url && (await ogImage(a.url))) || a.image })),
 );
 // ギャラリーは 2 枚ずつの行にし、行内の高さを揃える（縦横比はトリミングせず元のまま）
-const galleryRows: { img: ImageMetadata; i: number }[][] = [];
-data.gallery.forEach((img, i) => {
-  if (i % 2 === 0) galleryRows.push([]);
-  galleryRows[galleryRows.length - 1].push({ img, i });
-});
+// 奇数枚のときは最後を 3 枚の行にして、1 枚だけの行（幅が揃わない）を作らない
+const items = data.gallery.map((img, i) => ({ img, i }));
+const galleryRows: (typeof items)[] = [];
+for (let k = 0; k < items.length; ) {
+  const size = items.length - k === 3 || items.length === 1 ? items.length - k : 2;
+  galleryRows.push(items.slice(k, k + size));
+  k += size;
+}
 const ratio = (img: ImageMetadata) => +(img.width / img.height).toFixed(4);
 const meta = [
   { k: 'Role', v: data.role },
@@ -402,11 +405,13 @@ const meta = [
     margin-top: 40px;
   }
 
-  /* 行内は縦横比に応じて幅を配分 → 高さが揃う。縦長が並ぶ行は画面高さで頭打ち */
+  /* 行内は縦横比に応じて幅を配分 → 高さが揃う */
   .g-row {
     display: flex;
     gap: var(--gutter);
-    width: min(100%, calc(var(--sum) * 78svh + (var(--n) - 1) * var(--gutter)));
+    /* 基本は全幅。1 枚だけ・縦長が並ぶ行は画面高さで頭打ちにし、中央に置く */
+    width: min(100%, calc(var(--sum) * 85svh + (var(--n) - 1) * var(--gutter)));
+    margin-inline: auto;
   }
 
   .g-item {
