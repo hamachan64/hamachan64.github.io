@@ -11,3 +11,6 @@ node_modules/
 # env
 .env
 .env.production
+
+# Claude Code の作業用 worktree
+.claude/worktrees/
