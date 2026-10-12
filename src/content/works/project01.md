@@ -11,6 +11,7 @@ gallery:
   - ../../../assets/images/works/01/01-01.png
   - ../../../assets/images/works/01/01-02.png
   - ../../../assets/images/works/01/01-03.jpg
+  - ../../../assets/images/works/01/01-04.jpg
 youtube: RK9K6ejfhXM
 youtubeAspect: vertical
 card: ../../../assets/images/works/01/01-03.jpg
