@@ -4,8 +4,9 @@ subtitle: Interactive AR Photo Experience
 concept: 光るステッキで空間に描く、AR 撮影体験
 conceptEn: An AR photo experience where you draw in the air with a glowing wand.
 post: |-
-  光るステッキの軌跡が、光のエフェクトになって画面に広がる。
-  撮った一枚をスマートフォンに持ち帰れる、AR 撮影ブースです。
+  光るステッキと魔法のエフェクトで、自分だけの演出をつくる新感覚の AR 撮影体験。
+  撮った一枚はスマートフォンに持ち帰れます。
+  NoMaps でしか撮れない、特別な記念写真を。
 role: Director / Engineer
 tech: AR / Interactive Installation / M5Stack
 year: "2026"
@@ -15,6 +16,9 @@ gallery:
   - ../../../assets/images/works/09/09-02.jpg
   - ../../../assets/images/works/09/09-03.jpg
   - ../../../assets/images/works/09/09-04.jpg
+  - ../../../assets/images/works/09/09-05.png
+youtube: grEbnxl3IMs
+youtubeAspect: vertical
 card: ../../../assets/images/works/09/09-02.jpg
 cardFocus: "0.5 0.5"
 before: ../../../assets/images/works/09/09-03.jpg
@@ -26,6 +30,7 @@ achievements:
     kind: 展示
     url: https://no-maps.jp
 order: 9
+hashtags: [IMMERSNAP, NoMaps2026] 
 ---
 
 IMMERSNAP を、イベント会場で誰でも体験できる撮影ブースとして展開した作品です。2026年9月、札幌で開催された「NoMaps 2026」で展示しました。
