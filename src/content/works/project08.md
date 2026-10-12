@@ -3,6 +3,9 @@ title: IMMERSNAP for PLAY PARK
 subtitle: Spatial Reality Display
 concept: 空間にお絵描きをしよう
 conceptEn: Let's draw in space.
+post: |-
+  iPad で描いたデコレーションが、裸眼立体視ディスプレイに立ち上がる。
+  プリントしたカードにスマホをかざすと、AR で飛び出します。
 role: Director / Engineer
 tech: Spatial Reality Display / Unity / AR
 year: "2026"

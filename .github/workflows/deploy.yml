@@ -52,6 +52,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Install dependencies
+        run: npm ci
       - name: Notify new works
         env:
           GH_TOKEN: ${{ github.token }}
@@ -66,7 +68,8 @@ jobs:
           fi
           jq -c '.[]' works.json | while read -r w; do
             title=$(jq -r .title <<<"$w")
-            body=$(jq -r '"デプロイが完了しました。下のリンクを開くと、投稿文が入った状態で X の投稿画面が開きます。\n\n### [X に投稿する](\(.intent))\n\n```\n\(.text)\n```\n\n投稿したらこの Issue は閉じてください。"' <<<"$w")
+            warn=$(jq -r 'if .over then "> [!WARNING]\n> 文字数が X の上限を超えています（\(.length) / 280）。投稿画面で短くしてください。\n\n" else "" end' <<<"$w")
+            body="$warn"$(jq -r '"デプロイが完了しました。下のリンクを開くと、投稿文が入った状態で X の投稿画面が開きます。\n\n### [X に投稿する](\(.intent))\n\n```\n\(.text)\n```\n\n投稿したらこの Issue は閉じてください。"' <<<"$w")
             echo "$body" >> "$GITHUB_STEP_SUMMARY"
             gh issue create --title "X に投稿：$title" --body "$body"
           done

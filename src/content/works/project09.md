@@ -3,6 +3,9 @@ title: IMMERSNAP for NoMaps
 subtitle: Interactive AR Photo Experience
 concept: 光るステッキで空間に描く、AR 撮影体験
 conceptEn: An AR photo experience where you draw in the air with a glowing wand.
+post: |-
+  光るステッキの軌跡が、光のエフェクトになって画面に広がる。
+  撮った一枚をスマートフォンに持ち帰れる、AR 撮影ブースです。
 role: Director / Engineer
 tech: AR / Interactive Installation / M5Stack
 year: "2026"

@@ -3,6 +3,9 @@ title: モンスター召喚！
 subtitle: AR Summoning App
 concept: 現実世界にモンスターを召喚するARアプリ
 conceptEn: An AR prototype app that summons monsters into the real world.
+post: |-
+  カードを置くと、モンスターが 3D で飛び出してくる。
+  現実世界にモンスターを召喚する AR アプリです。
 role: Director / Engineer
 tech: AR / Unity / PICO
 year: "2026"

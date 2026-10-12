@@ -3,6 +3,9 @@ title: AR イマーシブ名刺
 subtitle: AR Immersive Business Card
 concept: 物理と仮想を融合しながら、自分の世界をイマーシブに表現
 conceptEn: Immersively expressing your world by fusing the physical and the virtual.
+post: |-
+  スマホをかざすと、名刺に刻んだ技術や肩書きがイマーシブな演出と共に立ち上がる。
+  紙の名刺では伝えきれない「世界観」を届ける、AR 名刺です。
 role: Director / Engineer
 tech: Unity / WebAR / Shader Graph
 year: "2025"

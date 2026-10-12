@@ -3,6 +3,9 @@ title: MR グリード・アイランド
 subtitle: Immersive Card LBE
 concept: 空間を歩き回ってカードを狩り、手の中のバインダーに集めていく、複数人参加型の MR LBE（ロケーションベース・エンタテインメント）
 conceptEn: A multiplayer MR location-based entertainment (LBE) where you roam the space, hunt for cards, and collect them in a binder in your hands.
+post: |-
+  空間を歩き回ってカードを狩り、バインダーに集めていく。
+  複数人で同時に遊べる、ロケーションベースの MR 体験です。
 role: Director / Engineer
 tech: Unity / Pico / MR
 year: "2026"

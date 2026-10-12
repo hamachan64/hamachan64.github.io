@@ -3,6 +3,9 @@ title: IMMERSNAP
 subtitle: XR Purikura
 concept: 静的な写真を、関係性の変化を映し出す「動的な記憶メディア」へ変革するタンジブルWebAR
 conceptEn: Transforming static photo stickers into dynamic, evolving memories through Semantic-Driven AI and Tangible WebAR.
+post: |-
+  撮った写真が、そのときの雰囲気や感情ごと動き出す。
+  プリクラ文化に着想を得た、タンジブル WebAR です。
 role: Director / Engineer
 tech: Unity / WebAR
 year: "2026"

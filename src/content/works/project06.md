@@ -3,6 +3,9 @@ title: Spatial Card
 subtitle: Immersive Spatial Card
 concept: 空間カードの中の世界に没入できるARアプリ
 conceptEn: An AR app that immerses you in the world inside a spatial card.
+post: |-
+  空間写真・空間動画をもとに、カードの中の世界を空間に広げる。
+  カードをきっかけに、その世界へ入り込める AR アプリです。
 role: Director / Engineer
 tech: Vision Pro / Swift
 year: "2026"

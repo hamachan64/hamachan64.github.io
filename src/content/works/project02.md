@@ -3,6 +3,9 @@ title: 幸せテープ便
 subtitle: Happiness Tape Delivery
 concept: 『記録』ではなく『記憶』を届ける
 conceptEn: Delivering "memories" rather than just "records".
+post: |-
+  結婚式のゲストが、カセットテープに AR で想いを吹き込む。
+  面と向かっては言えない本音を、『記録』ではなく『記憶』として届けます。
 role: Engineer
 tech: Unity / WebAR / AR Foundation
 year: "2025"

@@ -3,6 +3,9 @@ title: ColorPull
 subtitle: Artificial Synesthesia Media
 concept: 訪れる地で視て、聴いて、感じる。空間と想いが共鳴する、“人工共感覚メディア”
 conceptEn: See, hear, and feel the places you visit. An "artificial synesthesia media" where space and emotion resonate.
+post: |-
+  街に残された人々の想いを「色」に変えて、空間に浮かび上がらせる。
+  訪れた場所で視て、聴いて、感じる、人工共感覚メディアです。
 role: Engineer
 tech: Unity / Location-based AR
 year: "2025"

@@ -9,6 +9,9 @@ const works = defineCollection({
       subtitle: z.string().nullish().transform((v) => v ?? ''), // 英語タイトル（空でも可）
       concept: z.string().optional(), // 日本語コンセプト（カード・詳細見出しに使用）
       conceptEn: z.string().optional(),
+      // X の新作告知ポスト用（.github/scripts/announce-works.mjs）
+      post: z.string().optional(), // 説明 2〜3 行。なければ concept を使う
+      hashtags: z.array(z.string()).default([]), // 例: [AR, XR]（# は不要）
       role: z.string().optional(),
       tech: z.string().optional(),
       year: z.string().optional(),
