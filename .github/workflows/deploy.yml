@@ -4,6 +4,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      announce:
+        description: X 投稿リンクの Issue を作る作品（例 project09）。空ならデプロイだけ
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -33,3 +38,35 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  # 新しく公開した Works があれば、X の投稿画面を開くリンクを Issue で知らせる（投稿は自分で押す）
+  announce:
+    needs: deploy
+    if: github.event_name == 'push' || inputs.announce != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Notify new works
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+          ONLY: ${{ inputs.announce }}
+        run: |
+          if [ -n "$ONLY" ]; then
+            node .github/scripts/announce-works.mjs --only "$ONLY" > works.json
+          else
+            node .github/scripts/announce-works.mjs "$BEFORE" "$AFTER" > works.json
+          fi
+          jq -c '.[]' works.json | while read -r w; do
+            title=$(jq -r .title <<<"$w")
+            body=$(jq -r '"デプロイが完了しました。下のリンクを開くと、投稿文が入った状態で X の投稿画面が開きます。\n\n### [X に投稿する](\(.intent))\n\n```\n\(.text)\n```\n\n投稿したらこの Issue は閉じてください。"' <<<"$w")
+            echo "$body" >> "$GITHUB_STEP_SUMMARY"
+            gh issue create --title "X に投稿：$title" --body "$body"
+          done

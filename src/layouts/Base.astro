@@ -7,10 +7,12 @@ import '../styles/global.css';
 interface Props {
   title: string;
   description?: string;
+  image?: string; // SNS でシェアされたときのカード画像（絶対 URL）
 }
 
 const {
   title,
+  image,
   description = 'Yuki Hamaguchi — 東京を拠点に活動する XR エンジニア／クリエイター。XR技術と物理表現を手掛かりに、現実的で非日常なイマーシブ体験を創る。',
 } = Astro.props;
 ---
@@ -27,6 +29,8 @@ const {
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
+    {image && <meta property="og:image" content={image} />}
+    <meta name="twitter:card" content={image ? 'summary_large_image' : 'summary'} />
     <script is:inline>document.documentElement.classList.add('js');</script>
     <ClientRouter fallback="none" />
   </head>
