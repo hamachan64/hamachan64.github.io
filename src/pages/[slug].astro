@@ -28,8 +28,21 @@ const cardImg = data.card ?? data.cover;
 const src = cardImg ? await previewSrc(cardImg) : undefined;
 // X などでシェアされたときのカード画像（webp は表示されないことがあるので jpg）
 const og = cardImg ? await getImage({ src: cardImg, width: Math.min(1200, cardImg.width), format: 'jpg' }) : undefined;
+// サムネイル：リンク先の OGP → 手動画像 → 文字のみ。画像が読めなくてもビルドは止めない
+const thumbOf = async (src: string | ImageMetadata) => {
+  try {
+    const r = await getImage({ src, width: 240, ...(typeof src === 'string' ? { inferSize: true } : {}) });
+    return { src: r.src, w: r.attributes.width, h: r.attributes.height };
+  } catch {
+    return undefined;
+  }
+};
 const achievements = await Promise.all(
-  data.achievements.map(async (a) => ({ ...a, thumb: (a.url && (await ogImage(a.url))) || a.image })),
+  data.achievements.map(async (a) => {
+    const og = a.url ? await ogImage(a.url) : undefined;
+    const thumb = (og && (await thumbOf(og))) || (a.image && (await thumbOf(a.image))) || undefined;
+    return { ...a, thumb };
+  }),
 );
 // ギャラリーは 2 枚ずつの行にし、行内の高さを揃える（縦横比はトリミングせず元のまま）
 // 奇数枚のときは最後を 3 枚の行にして、1 枚だけの行（幅が揃わない）を作らない
@@ -55,7 +68,7 @@ const meta = [
       <div class="d-hero-top">
         <a class="label label-ink back" href="/works">← Works</a>
         <p class="label num" data-fade data-manual style="--d: 200ms">
-          Project {no}{!data.comingSoon && <> / {String(total).padStart(2, '0')}</>}
+          Project {no}{!data.comingSoon && <> / {String(total).padStart(2, '0')}</>}{data.badge && <> · {data.badge}</>}
         </p>
       </div>
 
@@ -140,11 +153,7 @@ const meta = [
                       <span class="num d-ach-date">{a.date}</span>
                       {a.thumb && (
                         <span class="d-ach-img">
-                          {typeof a.thumb === 'string' ? (
-                            <Image src={a.thumb} alt="" width={240} height={150} inferSize loading="lazy" />
-                          ) : (
-                            <Image src={a.thumb} alt="" width={240} loading="lazy" />
-                          )}
+                          <img src={a.thumb.src} alt="" width={a.thumb.w} height={a.thumb.h} loading="lazy" decoding="async" />
                         </span>
                       )}
                       <span class="d-ach-text">

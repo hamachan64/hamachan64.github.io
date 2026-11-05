@@ -23,6 +23,7 @@ const items = await Promise.all(
     year: w.data.year,
     medium: w.data.medium,
     comingSoon: w.data.comingSoon,
+    badge: w.data.badge,
     tags: (w.data.tech ?? '').split('/').map((t) => t.trim()).filter(Boolean),
     before: w.data.before ? await square(w.data.before) : undefined,
     after: w.data.after ? await square(w.data.after) : undefined,
@@ -47,7 +48,7 @@ const items = await Promise.all(
               <a class:list={['ix-row', { 'is-soon': w.comingSoon }]} href={w.comingSoon ? undefined : `/${w.id}`} data-ix={w.id}>
                 <span class="num">{w.no}</span>
                 <span class="ix-title">{w.title}</span>
-                <span class="num ix-year">{w.comingSoon ? '制作中' : w.year}</span>
+                <span class="num ix-year">{w.comingSoon ? '制作中' : w.badge ?? w.year}</span>
               </a>
             </li>
           ))
@@ -81,6 +82,7 @@ const items = await Promise.all(
               <span class="work-cap">
                 <span class="label num work-no">{w.no}</span>
                 <span class="work-title">{w.title}</span>
+                {w.badge && <span class="work-badge label">{w.badge}</span>}
                 <span class="work-medium label">
                   {w.medium}
                   {w.year && <span class="num">　{w.year}</span>}
@@ -233,6 +235,13 @@ const items = await Promise.all(
     font-size: 15px;
     font-weight: 500;
     line-height: 1.4;
+  }
+
+  .work-badge {
+    justify-self: end;
+    align-self: center;
+    padding: 2px 8px;
+    border: 1px solid var(--line-strong);
   }
 
   .work-medium {

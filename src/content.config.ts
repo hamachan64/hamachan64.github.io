@@ -52,6 +52,7 @@ const works = defineCollection({
           keep: z.string(), // どう持ち帰るか
         })
         .optional(),
+      badge: z.string().optional(), // 公開したまま付ける注記（例: Coming soon）。一覧と作品ページに出る
       comingSoon: z.boolean().default(false),
       order: z.number(),
     }),
