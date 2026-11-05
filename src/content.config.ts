@@ -37,9 +37,64 @@ const works = defineCollection({
           })
         )
         .default([]),
+      // シリーズの特設ページ（例: immersnap → /immersnap）にまとめる作品
+      series: z.enum(['immersnap']).optional(),
+      // 特設ページでの展示ごとの紹介。比較表にも使う
+      edition: z
+        .object({
+          name: z.string(), // 特設ページでの呼び名（例: NoMaps）
+          venue: z.string(), // 会場・イベント名
+          place: z.string().optional(), // 都市など
+          lead: z.string(), // 1〜2 文の紹介
+          leadEn: z.string().optional(),
+          draw: z.string(), // 何で描くか
+          appear: z.string(), // どこに現れるか
+          keep: z.string(), // どう持ち帰るか
+        })
+        .optional(),
       comingSoon: z.boolean().default(false),
       order: z.number(),
     }),
 });
 
-export const collections = { works };
+// シリーズの特設ページ（例: /immersnap）全体の情報。本文はコンセプト文
+const series = defineCollection({
+  loader: glob({ pattern: '*.md', base: './src/content/series' }),
+  schema: ({ image }) =>
+    z.object({
+      title: z.string(),
+      subtitle: z.string(), // 例: Interactive AR Photo Experience
+      catch: z.array(z.string()), // ヒーローのキャッチ（1 要素 = 1 行）
+      statement: z.array(z.string()), // Concept の見出し（1 要素 = 1 行）
+      description: z.string(), // 検索結果・SNS シェア用の説明文
+      keyVisual: image(),
+      keyVisualCaption: z.string().optional(),
+      // 体験の流れ（展示が変わっても共通のもの）
+      stepsTitle: z.array(z.string()),
+      steps: z.array(z.object({ en: z.string(), jp: z.string(), body: z.string(), bodyEn: z.string().optional() })),
+      // 実績・展示歴（古い順に書く）
+      achievements: z
+        .array(
+          z.object({
+            date: z.string(), // 例: "2026.12"
+            title: z.string(),
+            kind: z.string().optional(), // 例: 展示 / 採択
+            url: z.string().url().optional(),
+          })
+        )
+        .default([]),
+      // 動画（上から順に並ぶ）
+      films: z
+        .array(
+          z.object({
+            youtube: z.string(), // YouTube 動画ID
+            title: z.string(),
+            aspect: z.enum(['wide', 'vertical']).default('wide'),
+            poster: image().optional(), // なければ YouTube のサムネイル
+          })
+        )
+        .default([]),
+    }),
+});
+
+export const collections = { works, series };

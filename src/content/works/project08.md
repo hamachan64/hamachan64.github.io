@@ -33,6 +33,16 @@ achievements:
     title: Spatial Reality Display HACKATHON（TOKYO NODE LAB / TNXR）
     kind: 参加
 order: 8
+series: immersnap
+edition:
+  name: PLAY PARK
+  venue: TOKYO NODE「PLAY PARK Vol.3」
+  place: 東京
+  lead: iPad とペンで描いたデコレーションが、裸眼立体視ディスプレイの中で立体的に浮かび上がる。完成したプリクラはカードになり、スマホをかざすと AR で飛び出す。
+  leadEn: Decorations drawn with an iPad and pen rise in 3D on a glasses-free display. The finished sticker becomes a printed card that pops out in AR on your smartphone.
+  draw: iPad とペン
+  appear: 空間再現ディスプレイ（ELF-SR1）
+  keep: プリントしたカード（スマホで AR）
 ---
 
 TOKYO NODE「Spatial Reality Display HACKATHON」（主催：TOKYO NODE LAB／企画・制作：TNXR／技術協力：ソニー株式会社）に参加し、制作した作品です。テーマは「みらいのアミューズメントパーク」。2026年5月、TOKYO NODE「PLAY PARK Vol.3」で展示しました。

@@ -26,10 +26,20 @@ after: ../../../assets/images/works/09/09-02.jpg
 medium: 光るステッキ → ミラー型サイネージ
 achievements:
   - date: "2026.09"
-    title: NoMaps 2026（札幌）
+    title: NoMaps 2026「DIVE INTO XR」（札幌）
     kind: 展示
     url: https://no-maps.jp
 order: 9
+series: immersnap
+edition:
+  name: NoMaps
+  venue: NoMaps 2026「DIVE INTO XR」
+  place: 札幌
+  lead: 光るステッキを振ると、その軌跡が魔法のエフェクトになって広がる。ミラー型のサイネージで撮った一枚は、QR コードでスマホに持ち帰れる。
+  leadEn: Wave a glowing wand and its trail spreads into magical effects. The shot from the mirror-like signage goes home with you via QR code.
+  draw: 光るステッキ（M5Stack）
+  appear: ミラー型サイネージ
+  keep: QR コードでスマートフォンへ
 hashtags: [IMMERSNAP, NoMaps2026] 
 ---
 

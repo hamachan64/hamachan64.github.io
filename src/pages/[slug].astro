@@ -5,6 +5,7 @@ import type { ImageMetadata } from 'astro';
 import Base from '../layouts/Base.astro';
 import Lines from '../components/Lines.astro';
 import Film from '../components/Film.astro';
+import SeriesBanner from '../components/SeriesBanner.astro';
 import { previewSrc } from '../lib/images';
 import { ogImage } from '../lib/ogp';
 
@@ -14,11 +15,12 @@ export async function getStaticPaths() {
   return works.map((work) => {
     const i = released.indexOf(work);
     const next = i === -1 ? released[0] : released[(i + 1) % released.length];
-    return { params: { slug: work.id }, props: { work, next, total: released.length } };
+    const seriesCount = work.data.series ? released.filter((w) => w.data.series === work.data.series).length : 0;
+    return { params: { slug: work.id }, props: { work, next, total: released.length, seriesCount } };
   });
 }
 
-const { work, next, total } = Astro.props;
+const { work, next, total, seriesCount } = Astro.props;
 const { data } = work;
 const { Content } = await render(work);
 const no = String(data.order).padStart(2, '0');
@@ -101,6 +103,12 @@ const meta = [
         </section>
       ) : (
         <>
+          {data.series === 'immersnap' && data.edition && (
+            <section class="wrap d-block d-series">
+              <SeriesBanner current={data.edition.name} count={seriesCount} />
+            </section>
+          )}
+
           {data.concept && (
             <section class="wrap grid d-block">
               <p class="d-label label" data-fade>Concept</p>

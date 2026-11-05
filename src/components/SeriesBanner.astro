@@ -1,0 +1,135 @@
+---
+/**
+ * 作品ページから、シリーズの特設ページ（例: /immersnap）へ誘導するバナー。
+ * 特設ページは ClientRouter を使わない独立したページなので、data-astro-reload で通常の遷移にする。
+ */
+import { Image } from 'astro:assets';
+import kv from '../../assets/images/works/09/09-01.png';
+
+interface Props {
+  current: string; // いま見ている作品の展示名（例: NoMaps）
+  count: number; // 展示の数
+}
+
+const { current, count } = Astro.props;
+---
+
+<a class="sb" href="/immersnap" data-astro-reload data-fade>
+  <Image class="sb-bg" src={kv} alt="" width={1600} loading="lazy" />
+  <span class="sb-body">
+    <span class="sb-eyebrow">IMMERSNAP Special Site</span>
+    <span class="sb-title jp">展示ごとの IMMERSNAP を見比べる</span>
+    <span class="sb-note jp">
+      この「{current}」版を含む {count} つの展示を、特設ページでまとめて紹介しています。
+    </span>
+    <span class="sb-cta">
+      特設ページへ <span class="sb-arrow" aria-hidden="true">→</span>
+    </span>
+  </span>
+</a>
+
+<style>
+  .sb {
+    position: relative;
+    display: grid;
+    align-items: end;
+    min-height: clamp(220px, 28vw, 340px);
+    overflow: hidden;
+    border-radius: 16px;
+    background: #05070f;
+    color: #e8edfb;
+    isolation: isolate;
+  }
+
+  /* キービジュアルと同じ虹色の縁 */
+  .sb::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    border-radius: inherit;
+    padding: 2px;
+    background: linear-gradient(115deg, #f2b6d6, #d8dbe8 28%, #a7b4ff 52%, #8f7cf0 72%, #6ed0d6);
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  .sb :global(.sb-bg) {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 70% 50%;
+    opacity: 0.85;
+    transition: transform 1.4s var(--ease-out);
+  }
+
+  .sb::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: linear-gradient(90deg, rgba(5, 7, 15, 0.92) 0%, rgba(5, 7, 15, 0.7) 45%, rgba(5, 7, 15, 0.1) 100%);
+  }
+
+  .sb:hover :global(.sb-bg) {
+    transform: scale(1.03);
+  }
+
+  .sb-body {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    gap: 10px;
+    max-width: 34em;
+    padding: clamp(24px, 3vw, 44px);
+  }
+
+  .sb-eyebrow {
+    font-family: var(--f-sans);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #9cbcff;
+  }
+
+  .sb-title {
+    font-size: clamp(20px, 2.2vw, 30px);
+    font-weight: 700;
+    line-height: 1.45;
+  }
+
+  .sb-note {
+    font-size: 13px;
+    line-height: 1.8;
+    color: rgba(222, 230, 252, 0.78);
+  }
+
+  .sb-cta {
+    margin-top: 8px;
+    font-family: var(--f-sans);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .sb-arrow {
+    display: inline-block;
+    transition: transform 0.6s var(--ease-out);
+  }
+
+  .sb:hover .sb-arrow {
+    transform: translateX(4px);
+  }
+
+  @media (max-width: 760px) {
+    .sb::before {
+      background: linear-gradient(0deg, rgba(5, 7, 15, 0.94) 10%, rgba(5, 7, 15, 0.5) 100%);
+    }
+  }
+</style>

@@ -23,11 +23,24 @@ before: ../../../assets/images/works/kazasu/04-before.webp
 after: ../../../assets/images/works/kazasu/04-after.webp
 medium: プリクラ → スマートフォン
 achievements:
+  - date: "2026.12"
+    title: 国際会議「SIGGRAPH Asia 2026」ポスターセッション
+    kind: 採択
+    url: https://sa2026.conference-schedule.org/presentation/?id=pos_119&sess=sess170
   - date: "2026.03"
     title: XRグループ展「中庭」（Pot Gallery）
     kind: 展示
     url: https://www.moguravr.com/xr-exhibition-nakaniwa-2026/
 order: 4
+series: immersnap
+edition:
+  name: 中庭
+  venue: XRグループ展「中庭」（Pot Gallery）
+  lead: 撮ったプリクラにスマホをかざすと、表情や手描きのデコレーションから AI がその日の雰囲気を読み取り、エフェクトとタイムラインリボンが立ち上がる。IMMERSNAP のはじまり。
+  leadEn: Hold a smartphone over your photo stickers, and AI reads the mood from faces and hand-drawn decorations, raising AR effects and a timeline ribbon. Where IMMERSNAP began.
+  draw: プリクラへの手描きデコレーション
+  appear: スマートフォン（WebAR）
+  keep: プリクラそのもの
 ---
 
 IMMERSNAPは、日本の「プリクラ」文化に着想を得た、新しい記憶の振り返り体験を提案するタンジブルWebARシステムです。
